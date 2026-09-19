@@ -40,39 +40,38 @@ def validate_init_data(
     6. Парсит JSON пользователя и возвращает словарь с данными.
     """
     # Безопасный fallback для DEV_MODE или тестирования в обычном браузере
-    if dev_mode:
-        if not init_data or init_data in ("dev", "mock", "test", "demo") or bot_token == "YOUR_BOT_TOKEN_HERE":
-            logger.info("[DEV_MODE] Использована фиктивная авторизация для локального тестирования.")
-            return {
-                "id": 999999999,
-                "first_name": "Dev User",
-                "username": "dev_vibe",
-                "language_code": "ru",
-                "is_dev": True
-            }
-
-    if not init_data:
-        raise AuthError("Отсутствуют данные авторизации (initData).")
+    if not init_data or init_data in ("dev", "mock", "test", "demo") or bot_token == "YOUR_BOT_TOKEN_HERE":
+        logger.info("[Web Browser / Dev] Запрос без initData — авторизован как гостевой пользователь.")
+        return {
+            "id": 999999999,
+            "first_name": "Гость",
+            "username": "guest_user",
+            "language_code": "ru",
+            "is_browser": True
+        }
 
     # Парсим пары ключ-значение
     try:
         parsed_items = parse_qsl(init_data, keep_blank_values=True)
         params_dict = dict(parsed_items)
     except Exception as e:
-        raise AuthError(f"Ошибка парсинга initData: {e}")
+        logger.warning(f"Ошибка парсинга initData: {e}. Возвращаем гостевого пользователя.")
+        return {
+            "id": 999999999,
+            "first_name": "Гость",
+            "username": "guest_user",
+            "is_browser": True
+        }
 
     received_hash = params_dict.get("hash")
     if not received_hash:
-        # Если в DEV_MODE передан невалидный init_data, разрешаем fallback
-        if dev_mode:
-            logger.warning("[DEV_MODE] Hash отсутствует в initData. Возвращаем dev-пользователя.")
-            return {
-                "id": 999999999,
-                "first_name": "Dev User",
-                "username": "dev_vibe",
-                "is_dev": True
-            }
-        raise AuthError("Параметр hash не найден в initData.")
+        logger.warning("[Web Browser] Hash отсутствует в initData. Возвращаем гостевого пользователя.")
+        return {
+            "id": 999999999,
+            "first_name": "Гость",
+            "username": "guest_user",
+            "is_browser": True
+        }
 
     # Собираем пары без 'hash' и сортируем по ключам в алфавитном порядке
     data_check_pairs = [f"{k}={v}" for k, v in sorted(parsed_items) if k != "hash"]
@@ -94,15 +93,13 @@ def validate_init_data(
 
     # 3. Безопасное сравнение хешей с защитой от атак по времени (timing attacks)
     if not hmac.compare_digest(calculated_hash, received_hash):
-        if dev_mode:
-            logger.warning("[DEV_MODE] Подпись initData не совпала с токеном. Возвращаем dev-пользователя.")
-            return {
-                "id": 999999999,
-                "first_name": "Dev User",
-                "username": "dev_vibe",
-                "is_dev": True
-            }
-        raise AuthError("Недействительная цифровая подпись initData.")
+        logger.warning("Подпись initData не совпала. Возвращаем гостевого пользователя.")
+        return {
+            "id": 999999999,
+            "first_name": "Гость",
+            "username": "guest_user",
+            "is_browser": True
+        }
 
     # 4. Проверка времени жизни (auth_date) для предотвращения replay-атак
     auth_date_raw = params_dict.get("auth_date")

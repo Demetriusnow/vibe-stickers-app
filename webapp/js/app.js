@@ -160,6 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
     topText: "КОГДА ЗАПУШИЛ В PROD",
     bottomText: "В ПЯТНИЦУ В 18:00",
     emoji: "🔥",
+    fontFamily: "impact",
+    textColor: "#FFFFFF",
+    strokeColor: "#000000",
     mediaUrl: "/media/fine_dog.mp4",
     isImage: false,
     file: null,
@@ -346,16 +349,96 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function applyTextStyle() {
+    const fontMap = {
+      impact: "'Montserrat', Impact, 'Arial Black', sans-serif",
+      rubik: "'Rubik', sans-serif",
+      montserrat: "'Montserrat', sans-serif",
+      comic: "cursive, 'Comic Sans MS', sans-serif"
+    };
+
+    const weightMap = {
+      impact: "900",
+      rubik: "800",
+      montserrat: "800",
+      comic: "700"
+    };
+
+    const fam = fontMap[studioState.fontFamily] || fontMap.impact;
+    const weight = weightMap[studioState.fontFamily] || "900";
+    const color = studioState.textColor || "#FFFFFF";
+    const stroke = studioState.strokeColor || "#000000";
+
+    [previewTopText, previewBottomText].forEach(el => {
+      if (!el) return;
+      el.style.fontFamily = fam;
+      el.style.fontWeight = weight;
+      el.style.color = color;
+
+      if (stroke === 'none') {
+        el.style.webkitTextStroke = '0px';
+        el.style.textShadow = '0 2px 8px rgba(0, 0, 0, 0.85)';
+      } else {
+        el.style.webkitTextStroke = `2.5px ${stroke}`;
+        el.style.textShadow = stroke === '#000000'
+          ? '0 0 10px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.8)'
+          : `0 0 12px ${stroke}`;
+      }
+    });
+  }
+
   function syncStudioText() {
     studioState.topText = studioTopInput.value.trim();
     studioState.bottomText = studioBottomInput.value.trim();
 
     previewTopText.textContent = studioState.topText || 'ВЕРХНИЙ ТЕКСТ';
     previewBottomText.textContent = studioState.bottomText || 'НИЖНИЙ ТЕКСТ';
+    applyTextStyle();
   }
 
   studioTopInput.addEventListener('input', syncStudioText);
   studioBottomInput.addEventListener('input', syncStudioText);
+
+  // Кастомизация стиля текста (Шрифт, Цвет, Обводка)
+  const fontChipsRow = document.getElementById('fontChipsRow');
+  const textColorPalette = document.getElementById('textColorPalette');
+  const strokeColorPalette = document.getElementById('strokeColorPalette');
+
+  if (fontChipsRow) {
+    fontChipsRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.font-chip');
+      if (!chip) return;
+      fontChipsRow.querySelectorAll('.font-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      studioState.fontFamily = chip.dataset.font || 'impact';
+      applyTextStyle();
+      tgApp.haptic.selection();
+    });
+  }
+
+  if (textColorPalette) {
+    textColorPalette.addEventListener('click', (e) => {
+      const dot = e.target.closest('.color-dot');
+      if (!dot) return;
+      textColorPalette.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      studioState.textColor = dot.dataset.color || '#FFFFFF';
+      applyTextStyle();
+      tgApp.haptic.selection();
+    });
+  }
+
+  if (strokeColorPalette) {
+    strokeColorPalette.addEventListener('click', (e) => {
+      const chip = e.target.closest('.stroke-chip');
+      if (!chip) return;
+      strokeColorPalette.querySelectorAll('.stroke-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      studioState.strokeColor = chip.dataset.stroke || '#000000';
+      applyTextStyle();
+      tgApp.haptic.selection();
+    });
+  }
 
   // Кнопки быстрой очистки инпутов
   document.querySelectorAll('.btn-input-clear').forEach(btn => {
@@ -704,8 +787,19 @@ document.addEventListener('DOMContentLoaded', () => {
         video_url: studioState.mediaUrl,
         top_text: top,
         bottom_text: bottom,
-        emoji: studioState.emoji || '🔥'
+        emoji: studioState.emoji || '🔥',
+        font_family: studioState.fontFamily || 'impact',
+        text_color: studioState.textColor || '#FFFFFF',
+        stroke_color: studioState.strokeColor || '#000000'
       });
+
+      if (res && res.is_browser) {
+        showToast('Стикер скомпилирован! Открой через @vibestick_bot в Telegram для сохранения в пак 🚀', 'info');
+        if (res.download_url) {
+          window.open(res.download_url, '_blank');
+        }
+        return;
+      }
 
       // Оптимистичный инкремент счетчика
       const cur = parseInt(packCounter.textContent, 10) || 0;
@@ -722,11 +816,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       showToast(`Стикер #${cur + 1} добавлен в твой Telegram пак! 🔥`, 'success');
     } catch (e) {
-      console.warn('Commit sticker fallback:', e);
-      const cur = parseInt(packCounter.textContent, 10) || 0;
-      packCounter.textContent = (cur + 1).toString();
-      showToast(`Стикер #${cur + 1} добавлен в пак! 🔥`, 'success');
-      tgApp.haptic.notification('success');
+      console.warn('Commit sticker error:', e);
+      const errMsg = e.message || '';
+      if (errMsg.includes('/start') || errMsg.includes('vibestick_bot') || errMsg.includes('user not found')) {
+        alert('⚠️ ' + errMsg);
+        showToast('Запусти бота @vibestick_bot в Telegram!', 'error');
+        return;
+      }
+      showToast(errMsg || 'Ошибка сборки стикера', 'error');
     } finally {
       isSubmitting = false;
       btnCommitPack.classList.remove('loading');

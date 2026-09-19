@@ -762,6 +762,121 @@ body::before {
   background: rgba(255, 0, 127, 0.3);
 }
 
+/* Панель кастомизации стиля текста (Шрифт, Цвет, Обводка) */
+.style-cyber-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(10, 16, 28, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.style-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.style-row-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8E9BAE;
+  min-width: 78px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.font-chips-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.font-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.font-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #C5D1E0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.font-chip[data-font="impact"] { font-family: 'Montserrat', sans-serif; font-weight: 900; }
+.font-chip[data-font="rubik"] { font-family: 'Rubik', sans-serif; font-weight: 800; }
+.font-chip[data-font="montserrat"] { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+.font-chip[data-font="comic"] { font-family: cursive, sans-serif; }
+
+.font-chip.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--neon-cyan);
+  color: #FFFFFF;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.color-palette-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.color-dot:active {
+  transform: scale(0.9);
+}
+
+.color-dot.active {
+  transform: scale(1.15);
+  border-color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+.stroke-palette-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stroke-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #C5D1E0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.stroke-chip.active {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: var(--neon-purple);
+  color: #FFFFFF;
+  box-shadow: 0 0 10px var(--neon-purple-glow);
+}
+
 /* Кнопки действий: ИИ и Рандом */
 .studio-buttons-row {
   display: flex;

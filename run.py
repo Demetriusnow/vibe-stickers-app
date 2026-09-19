@@ -62,16 +62,21 @@ async def main():
     # Проверяем, задан ли реальный токен бота
     if config.BOT_TOKEN and config.BOT_TOKEN != "YOUR_BOT_TOKEN_HERE":
         logger.info("🤖 Запуск polling Telegram-бота...")
-        try:
-            bot_info = await bot.get_me()
-            logger.info(f"Бот подключен: @{bot_info.username} ({bot_info.first_name})")
-            await dp.start_polling(bot, handle_as_tasks=True)
-        except Exception as e:
-            logger.error(f"Ошибка при запуске polling бота: {e}")
-            logger.warning("Веб-сервер продолжает работу. Для работы бота укажите валидный BOT_TOKEN в .env")
-            # Держим сервер запущенным
-            while True:
-                await asyncio.sleep(3600)
+        retry_delay = 3
+        while True:
+            try:
+                bot_info = await bot.get_me()
+                logger.info(f"Бот подключен: @{bot_info.username} ({bot_info.first_name})")
+                # Всегда сбрасываем старый вебхук и подвисшие апдейты
+                await bot.delete_webhook(drop_pending_updates=True)
+                logger.info("Вебхук очищен. Начинаем прием апдейтов (polling)...")
+                await dp.start_polling(bot, handle_as_tasks=True)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"⚠️ Ошибка polling бота: {e}. Автоматический перезапуск через {retry_delay} сек...")
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 1.5, 30)
     else:
         logger.warning("⚠️ BOT_TOKEN не указан или оставлен шаблонным в .env!")
         logger.warning(f"Веб-приложение доступно для локального тестирования в браузере: http://{config.HOST}:{active_port}")

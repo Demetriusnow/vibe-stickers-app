@@ -155,6 +155,41 @@
               </div>
             </div>
 
+            <!-- Панель кастомизации шрифта и цветов текста -->
+            <div class="style-cyber-panel">
+              <div class="style-row">
+                <span class="style-row-label">Шрифт:</span>
+                <div class="font-chips-row" id="fontChipsRow">
+                  <button type="button" class="font-chip active" data-font="impact">Impact</button>
+                  <button type="button" class="font-chip" data-font="rubik">Rubik</button>
+                  <button type="button" class="font-chip" data-font="montserrat">Montserrat</button>
+                  <button type="button" class="font-chip" data-font="comic">Comic</button>
+                </div>
+              </div>
+
+              <div class="style-row">
+                <span class="style-row-label">Цвет текста:</span>
+                <div class="color-palette-row" id="textColorPalette">
+                  <button type="button" class="color-dot active" data-color="#FFFFFF" style="background: #FFFFFF;" title="Белый"></button>
+                  <button type="button" class="color-dot" data-color="#FFE600" style="background: #FFE600;" title="Жёлтый"></button>
+                  <button type="button" class="color-dot" data-color="#00F2FE" style="background: #00F2FE;" title="Неон-Циан"></button>
+                  <button type="button" class="color-dot" data-color="#00FF88" style="background: #00FF88;" title="Неон-Лайм"></button>
+                  <button type="button" class="color-dot" data-color="#FF3344" style="background: #FF3344;" title="Пламя"></button>
+                  <button type="button" class="color-dot" data-color="#FF007F" style="background: #FF007F;" title="Неон-Пинк"></button>
+                </div>
+              </div>
+
+              <div class="style-row">
+                <span class="style-row-label">Обводка:</span>
+                <div class="stroke-palette-row" id="strokeColorPalette">
+                  <button type="button" class="stroke-chip active" data-stroke="#000000">⚫ Черная</button>
+                  <button type="button" class="stroke-chip" data-stroke="#FFFFFF">⚪ Белая</button>
+                  <button type="button" class="stroke-chip" data-stroke="#00F2FE">🔵 Циан</button>
+                  <button type="button" class="stroke-chip" data-stroke="none">🚫 Без</button>
+                </div>
+              </div>
+            </div>
+
             <!-- Кнопки быстрого генерирования и рандома -->
             <div class="studio-buttons-row">
               <button type="button" class="btn-cyber btn-magic" id="btnAiGenerate" title="Сгенерировать смешной мем с помощью Gemini Flash AI">

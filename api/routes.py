@@ -211,18 +211,24 @@ async def handle_commit_sticker(request: web.Request) -> web.Response:
     top_text = body.get("top_text", "")
     bottom_text = body.get("bottom_text", "")
     emoji = body.get("emoji", "🔥")
+    font_family = body.get("font_family", "impact")
+    text_color = body.get("text_color", "#FFFFFF")
+    stroke_color = body.get("stroke_color", "#000000")
 
     bot: Bot = request.app.get("bot")
 
     # 2. Конвертация видео с защитой от перегрузки CPU (семафор)
     try:
         async with commit_semaphore:
-            logger.info(f"Начало сборки стикера для user_id={user['id']}: '{top_text} / {bottom_text}'")
+            logger.info(f"Начало сборки стикера для user_id={user['id']}: '{top_text} / {bottom_text}' (font={font_family}, color={text_color})")
             sticker_bytes = await process_sticker(
                 video_url=video_url,
                 caption=caption,
                 top_text=top_text,
-                bottom_text=bottom_text
+                bottom_text=bottom_text,
+                font_family=font_family,
+                text_color=text_color,
+                stroke_color=stroke_color
             )
     except Exception as e:
         logger.error(f"Ошибка обработки видео в FFmpeg: {e}")
@@ -231,17 +237,26 @@ async def handle_commit_sticker(request: web.Request) -> web.Response:
     # 3. Добавление в Telegram-стикерпак
     user_id = user["id"]
     user_name = user.get("first_name", "User")
+    is_browser = user.get("is_browser", False)
 
-    # Если бот работает в DEV_MODE без токена
-    if not bot or not config.BOT_TOKEN or config.BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-        logger.warning(f"[DEV_MODE] Стикер собран ({len(sticker_bytes)} байт), но Telegram Bot не настроен.")
+    # Если пользователь тестирует в обычном браузере (вне Telegram WebApp)
+    if is_browser or user_id == 999999999 or not bot or not config.BOT_TOKEN or config.BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+        webm_filename = f"sticker_{uuid.uuid4().hex[:8]}.webm"
+        upload_dir = config.BASE_DIR / "webapp" / "media" / "uploads"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        with open(upload_dir / webm_filename, "wb") as f:
+            f.write(sticker_bytes)
+        download_url = f"/media/uploads/{webm_filename}"
+
+        logger.info(f"Стикер собран для веб-гостя ({len(sticker_bytes)} байт) -> {download_url}")
         return web.json_response({
             "success": True,
+            "is_browser": True,
             "created": True,
+            "download_url": download_url,
             "pack_name": f"v_{user_id}_demo",
             "pack_link": f"https://t.me/addstickers/v_{user_id}_demo",
-            "demo_mode": True,
-            "message": "Стикер успешно собран! В DEV_MODE добавление в Telegram сымитировано."
+            "message": "Стикер готов! Чтобы сохранить его прямо в Telegram-стикерпак, открой приложение через бота @vibestick_bot."
         })
 
     try:
@@ -260,7 +275,14 @@ async def handle_commit_sticker(request: web.Request) -> web.Response:
             "pack_link": pack_link
         })
     except TelegramBadRequest as e:
-        logger.error(f"TelegramBadRequest при добавлении стикера: {e}")
+        err_msg = str(e)
+        logger.error(f"TelegramBadRequest при добавлении стикера: {err_msg}")
+        err_lower = err_msg.lower()
+        if "user not found" in err_lower or "peer_id_invalid" in err_lower:
+            return web.json_response({
+                "error": "Telegram требует, чтобы ты сначала нажал /start в боте @vibestick_bot! После этого стикерпак создастся моментально.",
+                "need_start": True
+            }, status=400)
         return web.json_response({"error": f"Ошибка Telegram Bot API: {e}"}, status=400)
     except Exception as e:
         logger.error(f"Ошибка выгрузки стикера: {e}")

@@ -20,11 +20,11 @@ class Config:
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     TENOR_API_KEY: str = os.getenv("TENOR_API_KEY", "")
-    WEBAPP_URL: str = os.getenv("WEBAPP_URL", "http://127.0.0.1:8080")
+    WEBAPP_URL: str = os.getenv("WEBAPP_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://vibe-stickers-u59u.onrender.com"
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8080"))
-    DEV_MODE: bool = os.getenv("DEV_MODE", "true").strip().lower() in ("true", "1", "yes")
-    BASE_URL: str = os.getenv("BASE_URL", "http://127.0.0.1:8080")
+    DEV_MODE: bool = os.getenv("DEV_MODE", "false").strip().lower() in ("true", "1", "yes")
+    BASE_URL: str = os.getenv("BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://vibe-stickers-u59u.onrender.com"
     USE_WEBHOOK: bool = os.getenv("USE_WEBHOOK", "false").strip().lower() in ("true", "1", "yes")
     BASE_DIR: Path = BASE_DIR
 

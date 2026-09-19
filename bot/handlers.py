@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 router = Router(name="base_handlers")
 
 
+def get_safe_webapp_url() -> str:
+    """Возвращает валидный URL для Telegram WebApp с поддержкой HTTPS."""
+    url = (config.WEBAPP_URL or "").strip()
+    if not url or "127.0.0.1" in url or "localhost" in url:
+        return "https://vibe-stickers-u59u.onrender.com"
+    if not url.startswith("https://") and not url.startswith("http://"):
+        return f"https://{url}"
+    return url
+
+
 def get_webapp_keyboard() -> InlineKeyboardMarkup:
     """Генерирует инлайн-кнопку запуска Mini App."""
     return InlineKeyboardMarkup(
@@ -28,7 +38,7 @@ def get_webapp_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text="⚡ Открыть Vibe Stickers",
-                    web_app=WebAppInfo(url=config.WEBAPP_URL)
+                    web_app=WebAppInfo(url=get_safe_webapp_url())
                 )
             ]
         ]
@@ -43,18 +53,20 @@ async def handle_start(message: Message, bot: Bot):
     - Отправляет приветствие и инлайн-кнопку запуска Mini App.
     """
     user_name = message.from_user.first_name if message.from_user else "друг"
-    
+    safe_url = get_safe_webapp_url()
+
     # Настраиваем постоянную кнопку Mini App слева от поля ввода (Menu Button)
-    try:
-        await bot.set_chat_menu_button(
-            chat_id=message.chat.id,
-            menu_button=MenuButtonWebApp(
-                text="🔥 Vibe Stickers",
-                web_app=WebAppInfo(url=config.WEBAPP_URL)
+    if safe_url.startswith("https://"):
+        try:
+            await bot.set_chat_menu_button(
+                chat_id=message.chat.id,
+                menu_button=MenuButtonWebApp(
+                    text="🔥 Vibe Stickers",
+                    web_app=WebAppInfo(url=safe_url)
+                )
             )
-        )
-    except Exception as e:
-        logger.warning(f"Не удалось установить MenuButtonWebApp для чата {message.chat.id}: {e}")
+        except Exception as e:
+            logger.warning(f"Не удалось установить MenuButtonWebApp для чата {message.chat.id}: {e}")
 
     text = (
         f"👋 Привет, <b>{user_name}</b>!\n\n"
@@ -128,3 +140,19 @@ async def handle_help(message: Message):
         "3. Используй команду /mypack в любой момент, чтобы получить ссылку на свой стикерпак в Telegram."
     )
     await message.answer(text, reply_markup=get_webapp_keyboard())
+
+
+@router.message()
+async def handle_any_message(message: Message, bot: Bot):
+    """
+    Универсальный обработчик любых входящих текстовых сообщений.
+    Гарантирует, что бот никогда не оставит пользователя без ответа.
+    """
+    user_name = message.from_user.first_name if message.from_user else "друг"
+    text = (
+        f"👋 Привет, <b>{user_name}</b>!\n\n"
+        "⚡ <b>Vibe Stickers</b> готов создавать вирусные видео-стикеры для тебя!\n\n"
+        "Жми кнопку ниже, чтобы запустить Студию мемов и собрать свой пак 👇"
+    )
+    await message.answer(text, reply_markup=get_webapp_keyboard())
+

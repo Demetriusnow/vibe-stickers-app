@@ -14,7 +14,7 @@ import asyncio
 import tempfile
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any
 from urllib.parse import urlparse
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
@@ -155,29 +155,87 @@ def is_static_image_file(path: str) -> bool:
     return False
 
 
-def _find_best_font(size: int = 38) -> ImageFont.FreeTypeFont:
-    """Ищет подходящий жирный шрифт с поддержкой кириллицы."""
-    candidate_paths = [
-        # Windows
+def _parse_color(color_val: Any, default: Tuple[int, int, int, int] = (255, 255, 255, 255)) -> Tuple[int, int, int, int]:
+    """Парсит HEX-цвет (#FFFFFF, #00FF88 и т.д.) или RGB кортеж в RGBA кортеж."""
+    if not color_val:
+        return default
+    if isinstance(color_val, (tuple, list)):
+        if len(color_val) == 3:
+            return (int(color_val[0]), int(color_val[1]), int(color_val[2]), 255)
+        elif len(color_val) >= 4:
+            return (int(color_val[0]), int(color_val[1]), int(color_val[2]), int(color_val[3]))
+    if isinstance(color_val, str):
+        c = color_val.strip().lstrip("#")
+        if len(c) == 6:
+            try:
+                r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+                return (r, g, b, 255)
+            except ValueError:
+                pass
+        elif len(c) == 8:
+            try:
+                r, g, b, a = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16), int(c[6:8], 16)
+                return (r, g, b, a)
+            except ValueError:
+                pass
+    return default
+
+
+def _find_best_font(size: int = 38, font_family: str = "impact") -> ImageFont.FreeTypeFont:
+    """Ищет подходящий жирный шрифт с поддержкой кириллицы по выбранному стилю."""
+    fam = (font_family or "impact").lower()
+
+    family_candidates = {
+        "impact": [
+            r"C:\Windows\Fonts\impact.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Impact.ttf",
+            r"C:\Windows\Fonts\arialbd.ttf"
+        ],
+        "rubik": [
+            r"C:\Windows\Fonts\segoeuib.ttf",
+            r"C:\Windows\Fonts\arialbd.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            r"C:\Windows\Fonts\impact.ttf"
+        ],
+        "montserrat": [
+            r"C:\Windows\Fonts\arialbd.ttf",
+            r"C:\Windows\Fonts\segoeui.ttf",
+            r"C:\Windows\Fonts\tahoma.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        ],
+        "comic": [
+            r"C:\Windows\Fonts\comicbd.ttf",
+            r"C:\Windows\Fonts\comic.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+            r"C:\Windows\Fonts\arialbd.ttf"
+        ]
+    }
+
+    candidates = list(family_candidates.get(fam, family_candidates["impact"]))
+    # Общие резервные шрифты
+    candidates += [
         r"C:\Windows\Fonts\impact.ttf",
         r"C:\Windows\Fonts\arialbd.ttf",
         r"C:\Windows\Fonts\segoeuib.ttf",
         r"C:\Windows\Fonts\tahoma.ttf",
         r"C:\Windows\Fonts\arial.ttf",
-        # Linux
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-        # macOS
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
         "/System/Library/Fonts/Supplemental/Impact.ttf",
         "/Library/Fonts/Arial Bold.ttf",
     ]
 
-    for path in candidate_paths:
+    for path in candidates:
         if os.path.isfile(path):
             try:
                 font = ImageFont.truetype(path, size)
-                bbox = font.getbbox("ТЕСТ")
+                bbox = font.getbbox("ТЕСТ123")
                 if bbox and (bbox[2] - bbox[0] > 0):
                     return font
             except Exception:
@@ -224,11 +282,15 @@ def _wrap_text_lines(
 def create_text_overlay_png(
     text: str,
     output_path: Optional[str] = None,
-    size: Tuple[int, int] = (512, 512)
+    size: Tuple[int, int] = (512, 512),
+    font_family: str = "impact",
+    text_color: str = "#FFFFFF",
+    stroke_color: str = "#000000",
+    stroke_width: int = 4
 ) -> str:
     """
     Создает прозрачный PNG 512x512 с адаптивным авто-переносом строк,
-    жирным мемным текстом белого цвета с чёрной обводкой (stroke_width=4, stroke_fill='black').
+    жирным мемным текстом с настраиваемыми цветами и обводкой.
     """
     if output_path is None:
         temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
@@ -250,21 +312,21 @@ def create_text_overlay_png(
     lines = []
 
     for test_size in range(initial_font_size, 18, -2):
-        font = _find_best_font(test_size)
-        candidate_lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=4)
+        font = _find_best_font(test_size, font_family=font_family)
+        candidate_lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=stroke_width)
         if len(candidate_lines) <= 4:
             lines = candidate_lines
             break
     else:
-        font = _find_best_font(20)
-        lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=4)
+        font = _find_best_font(20, font_family=font_family)
+        lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=stroke_width)
 
     line_spacing = 6
     line_heights = []
     line_widths = []
 
     for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font, stroke_width=4)
+        bbox = draw.textbbox((0, 0), line, font=font, stroke_width=stroke_width)
         line_widths.append(bbox[2] - bbox[0])
         line_heights.append(bbox[3] - bbox[1])
 
@@ -273,15 +335,18 @@ def create_text_overlay_png(
     if y_current < 20:
         y_current = 20
 
+    fill_rgba = _parse_color(text_color, (255, 255, 255, 255))
+    stroke_rgba = _parse_color(stroke_color, (0, 0, 0, 255))
+
     for i, line in enumerate(lines):
         x = (size[0] - line_widths[i]) // 2
         draw.text(
             (x, y_current),
             line,
             font=font,
-            fill=(255, 255, 255, 255),
-            stroke_width=4,
-            stroke_fill=(0, 0, 0, 255)
+            fill=fill_rgba,
+            stroke_width=stroke_width,
+            stroke_fill=stroke_rgba
         )
         y_current += line_heights[i] + line_spacing
 
@@ -294,9 +359,13 @@ def generate_text_overlay_png(
     bottom_text: str,
     output_path: str,
     width: int = 512,
-    height: int = 512
+    height: int = 512,
+    font_family: str = "impact",
+    text_color: str = "#FFFFFF",
+    stroke_color: str = "#000000",
+    stroke_width: int = 4
 ) -> str:
-    """Создает прозрачный PNG 512x512 с раздельным верхним и нижним текстом."""
+    """Создает прозрачный PNG 512x512 с раздельным верхним и нижним текстом и настраиваемым стилем."""
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     max_w = width - 50
@@ -304,32 +373,36 @@ def generate_text_overlay_png(
     top_clean = (top_text or "").strip().upper()
     bottom_clean = (bottom_text or "").strip().upper()
 
+    fill_rgba = _parse_color(text_color, (255, 255, 255, 255))
+    stroke_rgba = _parse_color(stroke_color, (0, 0, 0, 255))
+
     if top_clean:
-        font_top = _find_best_font(36)
-        top_lines = _wrap_text_lines(draw, top_clean, font_top, max_w, stroke_width=4)
+        font_top = _find_best_font(36, font_family=font_family)
+        top_lines = _wrap_text_lines(draw, top_clean, font_top, max_w, stroke_width=stroke_width)
         y_top = 20
         for line in top_lines:
-            bbox = draw.textbbox((0, 0), line, font=font_top, stroke_width=4)
+            bbox = draw.textbbox((0, 0), line, font=font_top, stroke_width=stroke_width)
             x = (width - (bbox[2] - bbox[0])) // 2
-            draw.text((x, y_top), line, font=font_top, fill=(255, 255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0, 255))
+            draw.text((x, y_top), line, font=font_top, fill=fill_rgba, stroke_width=stroke_width, stroke_fill=stroke_rgba)
             y_top += (bbox[3] - bbox[1]) + 6
 
     if bottom_clean:
-        font_bottom = _find_best_font(40)
-        bot_lines = _wrap_text_lines(draw, bottom_clean, font_bottom, max_w, stroke_width=4)
-        line_heights = [draw.textbbox((0, 0), l, font=font_bottom, stroke_width=4)[3] - draw.textbbox((0, 0), l, font=font_bottom, stroke_width=4)[1] for l in bot_lines]
+        font_bottom = _find_best_font(40, font_family=font_family)
+        bot_lines = _wrap_text_lines(draw, bottom_clean, font_bottom, max_w, stroke_width=stroke_width)
+        line_heights = [draw.textbbox((0, 0), l, font=font_bottom, stroke_width=stroke_width)[3] - draw.textbbox((0, 0), l, font=font_bottom, stroke_width=stroke_width)[1] for l in bot_lines]
         total_h = sum(line_heights) + (len(bot_lines) - 1) * 6
         y_bot = height - total_h - 35
         if y_bot < 20:
             y_bot = 20
         for i, line in enumerate(bot_lines):
-            bbox = draw.textbbox((0, 0), line, font=font_bottom, stroke_width=4)
+            bbox = draw.textbbox((0, 0), line, font=font_bottom, stroke_width=stroke_width)
             x = (width - (bbox[2] - bbox[0])) // 2
-            draw.text((x, y_bot), line, font=font_bottom, fill=(255, 255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0, 255))
+            draw.text((x, y_bot), line, font=font_bottom, fill=fill_rgba, stroke_width=stroke_width, stroke_fill=stroke_rgba)
             y_bot += line_heights[i] + 6
 
     img.save(output_path, "PNG")
     return output_path
+
 
 
 async def _download_video(url: str, dest_path: str, timeout_sec: float = 12.0) -> None:
@@ -367,7 +440,10 @@ async def process_sticker(
     video_url: Optional[str] = None,
     caption: str = "",
     top_text: str = "",
-    bottom_text: str = ""
+    bottom_text: str = "",
+    font_family: str = "impact",
+    text_color: str = "#FFFFFF",
+    stroke_color: str = "#000000"
 ) -> bytes:
     """
     Основной пайплайн сборки Telegram Video Sticker:
@@ -450,10 +526,16 @@ async def process_sticker(
         temp_files.append(overlay_path)
 
         if clean_top and clean_bottom:
-            generate_text_overlay_png(clean_top, clean_bottom, overlay_path, 512, 512)
+            generate_text_overlay_png(
+                clean_top, clean_bottom, overlay_path, 512, 512,
+                font_family=font_family, text_color=text_color, stroke_color=stroke_color
+            )
         else:
             final_punchline = clean_bottom or clean_top or combined_text
-            create_text_overlay_png(final_punchline, overlay_path, (512, 512))
+            create_text_overlay_png(
+                final_punchline, overlay_path, (512, 512),
+                font_family=font_family, text_color=text_color, stroke_color=stroke_color
+            )
 
         # 5. Выходной файл
         target_path = output_path
