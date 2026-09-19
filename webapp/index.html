@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Vibe Stickers — AI Студия Стикерпаков</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Google Fonts: Montserrat (Ultra Bold) & Rubik for cyber meme typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,900&family=Rubik:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Верхняя панель (Хедер): бренд, счетчик пака, кнопка открытия -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo-glow">⚡</div>
+        <div class="brand-titles">
+          <span class="brand-name">VIBE STICKERS</span>
+          <span class="brand-badge-ai">AI LAB</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Счетчик добавленных стикеров -->
+        <div class="pack-badge" id="packBadge" title="Количество стикеров в твоем персональном паке">
+          <span class="badge-fire">🔥</span>
+          <span class="badge-text"><strong id="packCounter">0</strong><span class="badge-max">/120</span></span>
+        </div>
+
+        <!-- Кнопка перехода в Telegram стикерпак -->
+        <button class="btn-open-pack" id="btnOpenPack" title="Открыть персональный стикерпак в Telegram">
+          <svg class="tg-icon" viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          <span>Пак</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Мобильный свитчер вкладок (Студия / Лента) -->
+    <nav class="mobile-switcher" id="mobileSwitcher">
+      <button class="switcher-tab active" id="tabStudioBtn" data-target="studio">
+        <span class="tab-icon">🎨</span>
+        <span class="tab-label">Студия</span>
+      </button>
+      <button class="switcher-tab" id="tabFeedBtn" data-target="feed">
+        <span class="tab-icon">🔥</span>
+        <span class="tab-label">Лента вайбов</span>
+        <span class="tab-pill-badge" id="feedCountBadge">33+</span>
+      </button>
+      <div class="switcher-slider" id="switcherSlider"></div>
+    </nav>
+
+    <!-- Главный сплит-лейаут: Студия слева, Лента справа -->
+    <main class="split-viewport" id="splitViewport">
+      
+      <!-- ================================================================ -->
+      <!-- ЛЕВАЯ ПАНЕЛЬ: СТУДИЯ СТИКЕРА                                     -->
+      <!-- ================================================================ -->
+      <section class="panel-studio active-view" id="panelStudio">
+        <div class="panel-scroll-content">
+
+          <!-- Онбординг: 3 простых шага -->
+          <div class="onboarding-guide" id="onboardingGuide">
+            <div class="onboarding-header">
+              <div class="onboarding-title">
+                <span class="guide-icon">⚡</span>
+                <span>Как сделать стикер за 3 шага:</span>
+              </div>
+              <button class="btn-guide-close" id="btnDismissGuide" title="Свернуть подсказку">✕</button>
+            </div>
+            <div class="onboarding-steps">
+              <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <div class="step-title">Текст мема</div>
+                  <div class="step-desc">Напиши фразу или нажми <strong>«🪄 ИИ»</strong></div>
+                </div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <div class="step-title">Выбери фон</div>
+                  <div class="step-desc">Найди гифку в поиске или загрузи файл</div>
+                </div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <div class="step-title">В пак!</div>
+                  <div class="step-desc">Жми <strong>«🔥 В пак»</strong> — и стикер в Telegram</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Студийное живое превью 512x512 -->
+          <div class="studio-preview-container">
+            <div class="studio-preview-box" id="studioPreviewBox">
+              <!-- Фоновое медиа (видео или изображение) -->
+              <div class="preview-media-wrapper" id="previewMediaWrapper">
+                <video id="studioVideo" class="preview-media" src="/media/fine_dog.mp4" autoplay loop muted playsinline webkit-playsinline></video>
+                <img id="studioImg" class="preview-media" alt="Custom Media" style="display: none;">
+              </div>
+
+              <!-- Живой мем-текст с оверлеем -->
+              <div class="card-caption-overlay">
+                <div class="meme-text meme-top" id="previewTopText">КОГДА ЗАПУШИЛ В PROD</div>
+                <div class="meme-text meme-bottom" id="previewBottomText">В ПЯТНИЦУ В 18:00</div>
+              </div>
+
+              <!-- Кибер-декорации углов -->
+              <div class="cyber-corner corner-tl"></div>
+              <div class="cyber-corner corner-tr"></div>
+              <div class="cyber-corner corner-bl"></div>
+              <div class="cyber-corner corner-br"></div>
+
+              <!-- Бейджи на превью -->
+              <div class="preview-badge-format">512 × 512 WebM</div>
+              <button class="preview-emoji-btn" id="previewEmojiBtn" title="Сменить эмодзи стикера">
+                <span id="previewEmojiChar">🔥</span>
+              </button>
+
+              <!-- Индикатор загрузки / рендеринга -->
+              <div class="preview-loading-overlay" id="previewLoadingOverlay" style="display: none;">
+                <div class="cyber-spinner"></div>
+                <span id="previewLoadingText">Генерация вайба...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Блок полей ввода текста мема -->
+          <div class="studio-section studio-text-section">
+            <div class="section-label">
+              <span class="label-icon">✍️</span>
+              <span>Текст мема</span>
+            </div>
+
+            <div class="input-cyber-group">
+              <div class="input-cyber-row">
+                <input type="text" id="studioTopInput" class="input-cyber" placeholder="ВЕРХНИЙ ТЕКСТ (СЕТАП)..." maxlength="50" autocomplete="off" value="КОГДА ЗАПУШИЛ В PROD">
+                <button type="button" class="btn-input-clear" data-target="studioTopInput" title="Очистить">✕</button>
+              </div>
+              <div class="input-cyber-row">
+                <input type="text" id="studioBottomInput" class="input-cyber" placeholder="НИЖНИЙ ТЕКСТ (ПАНЧЛАЙН)..." maxlength="60" autocomplete="off" value="В ПЯТНИЦУ В 18:00">
+                <button type="button" class="btn-input-clear" data-target="studioBottomInput" title="Очистить">✕</button>
+              </div>
+            </div>
+
+            <!-- Кнопки быстрого генерирования и рандома -->
+            <div class="studio-buttons-row">
+              <button type="button" class="btn-cyber btn-magic" id="btnAiGenerate" title="Сгенерировать смешной мем с помощью Gemini Flash AI">
+                <span class="btn-glow-layer"></span>
+                <span class="btn-icon">🪄</span>
+                <span class="btn-label">ИИ придумай фразу</span>
+              </button>
+              <button type="button" class="btn-cyber btn-secondary" id="btnRandomText" title="Случайная мем-фраза из каталога">
+                <span class="btn-icon">🎲</span>
+                <span class="btn-label">Рандом</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Блок подбора фона (ИИ-поиск Tenor + локальные клипы + загрузка) -->
+          <div class="studio-section studio-bg-section">
+            <div class="section-label-between">
+              <div class="section-label">
+                <span class="label-icon">🎬</span>
+                <span>Выбор видео / GIF фона</span>
+              </div>
+              <button type="button" class="btn-text-action" id="btnUploadFileTrigger">
+                <span>📁 Свой файл</span>
+              </button>
+              <input type="file" id="studioFileInput" accept="video/mp4,video/webm,video/quicktime,image/gif,image/jpeg,image/png,image/webp" style="display: none;">
+            </div>
+
+            <!-- Строка поиска гифок -->
+            <div class="search-cyber-box">
+              <input type="text" id="gifSearchInput" class="input-cyber search-input" placeholder="Поиск GIF/видео (кот, panic, dance, money)..." autocomplete="off">
+              <button type="button" class="btn-search-cyber" id="btnGifSearch" title="Искать гифки">
+                <span class="btn-icon">🔍</span>
+              </button>
+            </div>
+
+            <!-- Быстрые чипсы тегов -->
+            <div class="quick-tags-scroll" id="quickTagsScroll">
+              <button class="quick-tag active" data-tag="it">💻 IT-дедлайн</button>
+              <button class="quick-tag" data-tag="session">📚 Сессия</button>
+              <button class="quick-tag" data-tag="friday">🍻 Пятница</button>
+              <button class="quick-tag" data-tag="cringe">💔 Кринж</button>
+              <button class="quick-tag" data-tag="success">💸 Успех</button>
+              <button class="quick-tag" data-tag="cat">🐱 Котики</button>
+              <button class="quick-tag" data-tag="random">🎲 Все мемы</button>
+            </div>
+
+            <!-- Индикатор выбранного своего файла -->
+            <div class="custom-file-banner" id="customFileBanner" style="display: none;">
+              <span class="banner-icon">📎</span>
+              <span class="banner-name" id="customFileName"></span>
+              <button type="button" class="banner-remove" id="btnRemoveCustomFile" title="Вернуться к каталогу">✕</button>
+            </div>
+
+            <!-- Сетка миниатюр для быстрого выбора фона -->
+            <div class="gif-thumbs-grid" id="gifThumbsGrid">
+              <!-- Миниатюры заполняются через JS -->
+            </div>
+          </div>
+
+          <!-- Финальная кнопка: Добавить стикер в пак -->
+          <div class="studio-cta-wrap">
+            <button type="button" class="btn-cyber-primary btn-commit-pack" id="btnCommitPack">
+              <span class="btn-neon-glow"></span>
+              <span class="btn-content">
+                <span class="btn-icon-fire">🔥</span>
+                <span class="btn-text-main">Добавить в мой стикерпак</span>
+              </span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- ПРАВАЯ ПАНЕЛЬ: ЛЕНТА ГОТОВЫХ СТИКЕРОВ                            -->
+      <!-- ================================================================ -->
+      <section class="panel-feed" id="panelFeed">
+        <div class="panel-scroll-content">
+          
+          <!-- Заголовок и фильтры ленты -->
+          <div class="feed-header">
+            <div class="feed-title-block">
+              <h2 class="feed-heading">Готовые стикеры</h2>
+              <p class="feed-subheading">Выбери мем: жми <strong>«В студию ✏️»</strong> для редактирования или <strong>«В пак 🔥»</strong> сразу!</p>
+            </div>
+            <button type="button" class="btn-cyber-round" id="btnRefreshFeed" title="Перемешать и сгенерировать новые">
+              <span class="btn-icon">⚡</span>
+            </button>
+          </div>
+
+          <!-- Категории ленты -->
+          <div class="categories-bar">
+            <div class="categories-scroll" id="categoriesScroll">
+              <button class="chip active" data-category="all">🔥 Все вайбы</button>
+              <button class="chip" data-category="it">💻 IT-дедлайн</button>
+              <button class="chip" data-category="session">📚 Сессия</button>
+              <button class="chip" data-category="friday">🍻 Пятница</button>
+              <button class="chip" data-category="cringe">💔 Кринж</button>
+              <button class="chip" data-category="success">💸 Успех</button>
+              <button class="chip" data-category="random">🎲 Рандом</button>
+            </div>
+          </div>
+
+          <!-- Сетка готовых карточек стикеров -->
+          <div class="stickers-grid" id="stickersGrid">
+            <!-- Динамически рендерится через JS -->
+          </div>
+
+          <!-- Кнопка дозагрузки / генерации новых вайбов -->
+          <div class="feed-footer">
+            <button type="button" class="btn-cyber btn-load-more" id="btnLoadMore">
+              <span class="btn-icon">✨</span>
+              <span>Загрузить ещё вайбов</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Всплывающий выбор эмодзи для стикера -->
+    <div class="emoji-picker-modal" id="emojiPickerModal">
+      <div class="emoji-picker-card">
+        <div class="emoji-picker-header">
+          <span>Выбери эмодзи для стикера</span>
+          <button class="btn-close-emoji" id="btnCloseEmojiPicker">✕</button>
+        </div>
+        <div class="emoji-grid" id="emojiGrid">
+          <button class="emoji-opt">🔥</button>
+          <button class="emoji-opt">🗿</button>
+          <button class="emoji-opt">💻</button>
+          <button class="emoji-opt">💀</button>
+          <button class="emoji-opt">🤡</button>
+          <button class="emoji-opt">☕</button>
+          <button class="emoji-opt">💸</button>
+          <button class="emoji-opt">🥳</button>
+          <button class="emoji-opt">🫠</button>
+          <button class="emoji-opt">😱</button>
+          <button class="emoji-opt">🍻</button>
+          <button class="emoji-opt">🚀</button>
+          <button class="emoji-opt">🕶️</button>
+          <button class="emoji-opt">💔</button>
+          <button class="emoji-opt">✨</button>
+          <button class="emoji-opt">👀</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Контейнер для всплывающих уведомлений (Toast) -->
+    <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <!-- Модули приложения -->
+  <script src="js/telegram.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

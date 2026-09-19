@@ -1,0 +1,25 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Git and IDE
+.git/
+.gitignore
+.dockerignore
+.vscode/
+.idea/
+
+# Local environment and secret tokens
+.env
+.env.local
+
+# Temporary and test artifacts
+test_out.txt
+test_e2e.py
+
+# User uploaded media
+webapp/media/uploads/*
+!webapp/media/uploads/.gitkeep

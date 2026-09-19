@@ -1,0 +1,29 @@
+# ==============================================================================
+# Render.com Blueprint Specification for Vibe Stickers Mini App
+# Документация: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  - type: web
+    name: vibe-stickers-app
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8080
+      - key: DEV_MODE
+        value: "false"
+      - key: BOT_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TENOR_API_KEY
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
