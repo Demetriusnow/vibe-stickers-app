@@ -142,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const quickTagsScroll = document.getElementById('quickTagsScroll');
   const gifThumbsGrid = document.getElementById('gifThumbsGrid');
   const btnCommitPack = document.getElementById('btnCommitPack');
+  const btnLoadMoreGifs = document.getElementById('btnLoadMoreGifs');
+  const btnShuffleGifs = document.getElementById('btnShuffleGifs');
+  const thumbsCounterLabel = document.getElementById('thumbsCounterLabel');
 
   // Лента
   const categoriesScroll = document.getElementById('categoriesScroll');
@@ -173,6 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let isSubmitting = false;
   let activeTab = 'studio';
   let currentFeedCategory = 'all';
+
+  // Состояние пагинации и поиска гифок в Студии
+  let currentGifQuery = 'it';
+  let currentGifOffset = 0;
+  let currentNextPos = '';
+  let currentLoadedGifsCount = 0;
+  let isFetchingGifs = false;
 
   // ==========================================================================
   // Вспомогательные функции
@@ -554,58 +564,105 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // Студия: Поиск GIF / Видео и сетка миниатюр
+  // Студия: Поиск GIF / Видео, пагинация и сетка миниатюр
   // ==========================================================================
-  async function searchAndRenderGifs(query, autoSelectFirst = false, isUserSearch = false) {
-    previewLoadingOverlay.style.display = 'flex';
-    previewLoadingText.textContent = isUserSearch ? '✨ ИИ подбирает гифки...' : 'Поиск мем-гифок...';
+  async function searchAndRenderGifs(query, autoSelectFirst = false, isUserSearch = false, isAppend = false, isShuffle = false) {
+    if (isFetchingGifs) return;
+    isFetchingGifs = true;
+
+    if (isAppend) {
+      if (btnLoadMoreGifs) {
+        btnLoadMoreGifs.classList.add('loading');
+        const txt = btnLoadMoreGifs.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Загрузка...';
+      }
+    } else {
+      previewLoadingOverlay.style.display = 'flex';
+      previewLoadingText.textContent = isShuffle
+        ? '🎲 Перемешиваем мемы...'
+        : (isUserSearch ? '✨ ИИ подбирает гифки...' : 'Поиск мем-гифок...');
+    }
 
     try {
       let items = [];
       let aiResult = null;
+      const targetQuery = query || currentGifQuery || 'it';
+      currentGifQuery = targetQuery;
+
+      const reqOffset = isAppend ? currentGifOffset : (isShuffle ? currentGifOffset : 0);
+      const reqPos = isAppend ? currentNextPos : '';
 
       try {
-        // Вызов интеллектуального ИИ-поиска гифок
+        // Вызов интеллектуального ИИ-поиска гифок с пагинацией и перемешиванием
         aiResult = await apiCall('/api/ai-search-gifs', 'POST', {
-          query: query,
-          limit: 12
+          query: targetQuery,
+          limit: 12,
+          offset: reqOffset,
+          pos: reqPos,
+          shuffle: isShuffle
         });
+
         if (aiResult && aiResult.gifs && aiResult.gifs.length > 0) {
           items = aiResult.gifs;
+          currentNextPos = aiResult.next_pos || '';
         }
       } catch (err) {
         console.warn('AI search endpoint failed, trying fallback search:', err);
         try {
-          const fallbackData = await apiCall(`/api/search-gifs?q=${encodeURIComponent(query)}&limit=12`);
+          const fallbackData = await apiCall(
+            `/api/search-gifs?q=${encodeURIComponent(targetQuery)}&limit=12&offset=${reqOffset}&pos=${encodeURIComponent(reqPos)}&shuffle=${isShuffle ? 1 : 0}`
+          );
           if (fallbackData && fallbackData.gifs && fallbackData.gifs.length > 0) {
             items = fallbackData.gifs;
+            currentNextPos = fallbackData.next_pos || '';
           }
         } catch (e) {
           console.warn('Network GIF search failed completely, using local clips:', e);
         }
       }
 
-      // Если Tenor не дал результатов, берем из локальных клипов
+      // Если Tenor / API не дали результатов, берем из локальных клипов
       if (!items.length) {
-        const qLower = query.toLowerCase();
-        items = LOCAL_MEME_CLIPS.filter(c =>
+        const qLower = targetQuery.toLowerCase();
+        let pool = LOCAL_MEME_CLIPS.filter(c =>
           c.tags.some(t => qLower.includes(t)) ||
           c.title.toLowerCase().includes(qLower)
         );
-        if (!items.length) items = LOCAL_MEME_CLIPS.slice(0, 12);
+        if (!pool.length) pool = LOCAL_MEME_CLIPS.slice();
+        if (isShuffle) {
+          pool = pool.slice().sort(() => Math.random() - 0.5);
+        }
+        const start = reqOffset % pool.length;
+        items = pool.slice(start, start + 12);
+        if (items.length < 12) {
+          items = items.concat(pool.slice(0, 12 - items.length));
+        }
       }
 
-      renderGifThumbnails(items);
+      // Отрисовка миниатюр в сетке
+      renderGifThumbnails(items, isAppend);
 
-      // Если пользователь явно искал по фразе через поиск
-      if (isUserSearch && aiResult) {
+      if (isAppend) {
+        currentGifOffset += items.length;
+        currentLoadedGifsCount += items.length;
+      } else {
+        currentGifOffset = items.length;
+        currentLoadedGifsCount = items.length;
+      }
+
+      if (thumbsCounterLabel) {
+        thumbsCounterLabel.textContent = `Показано: ${currentLoadedGifsCount}`;
+      }
+
+      // Если пользователь явно искал по фразе через поиск (не в режиме append)
+      if (isUserSearch && aiResult && !isAppend) {
         const currentTop = studioTopInput.value.trim();
         const currentBottom = studioBottomInput.value.trim();
         const isDefaultOrEmpty = (!currentTop || currentTop === "КОГДА ЗАПУШИЛ В PROD") &&
                                  (!currentBottom || currentBottom === "В ПЯТНИЦУ В 18:00");
 
         if (isDefaultOrEmpty && (aiResult.suggested_top || aiResult.suggested_bottom)) {
-          studioTopInput.value = aiResult.suggested_top || query.toUpperCase();
+          studioTopInput.value = aiResult.suggested_top || targetQuery.toUpperCase();
           studioBottomInput.value = aiResult.suggested_bottom || "";
           syncStudioText();
           if (aiResult.emoji) {
@@ -618,21 +675,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (autoSelectFirst && items.length > 0) {
+      if (autoSelectFirst && items.length > 0 && !isAppend) {
         const first = items[0];
         const isImg = checkIsImage(first.url);
         updateStudioPreviewMedia(first.url, isImg);
       }
     } finally {
+      isFetchingGifs = false;
       previewLoadingOverlay.style.display = 'none';
+      if (btnLoadMoreGifs) {
+        btnLoadMoreGifs.classList.remove('loading');
+        const txt = btnLoadMoreGifs.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Показать ещё';
+      }
     }
   }
 
-  function renderGifThumbnails(items) {
-    gifThumbsGrid.innerHTML = '';
-    items.forEach(item => {
+  function renderGifThumbnails(items, isAppend = false) {
+    if (!isAppend) {
+      gifThumbsGrid.innerHTML = '';
+    }
+
+    items.forEach((item, idx) => {
       const thumb = document.createElement('div');
-      thumb.className = 'thumb-item';
+      thumb.className = 'thumb-item thumb-anim-enter';
+      thumb.style.animationDelay = `${(idx % 12) * 25}ms`;
       thumb.dataset.url = item.url;
 
       const isImg = checkIsImage(item.url);
@@ -657,6 +724,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       thumb.addEventListener('click', () => {
         tgApp.haptic.selection();
+        // Сброс активного класса со всех
+        gifThumbsGrid.querySelectorAll('.thumb-item').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+
         // Сброс загруженного своего файла
         studioState.file = null;
         studioState.uploadPromise = null;
@@ -669,16 +740,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Кнопка: ➕ Показать ещё гифок
+  if (btnLoadMoreGifs) {
+    btnLoadMoreGifs.addEventListener('click', () => {
+      tgApp.haptic.impact('light');
+      searchAndRenderGifs(currentGifQuery, false, false, /* isAppend */ true, false);
+    });
+  }
+
+  // Кнопка: 🎲 Другие варианты (Перемешать)
+  if (btnShuffleGifs) {
+    btnShuffleGifs.addEventListener('click', () => {
+      tgApp.haptic.impact('medium');
+      currentGifOffset += 12;
+      searchAndRenderGifs(currentGifQuery, true, false, /* isAppend */ false, /* isShuffle */ true);
+      showToast('🎲 Новая подборка мемов!', 'info');
+    });
+  }
+
   // Обработчики поиска
   btnGifSearch.addEventListener('click', () => {
     const q = gifSearchInput.value.trim();
-    if (q) searchAndRenderGifs(q, true, true);
+    if (q) {
+      currentGifQuery = q;
+      currentGifOffset = 0;
+      currentNextPos = '';
+      searchAndRenderGifs(q, true, true, false, false);
+    }
   });
 
   gifSearchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const q = gifSearchInput.value.trim();
-      if (q) searchAndRenderGifs(q, true, true);
+      if (q) {
+        currentGifQuery = q;
+        currentGifOffset = 0;
+        currentNextPos = '';
+        searchAndRenderGifs(q, true, true, false, false);
+      }
     }
   });
 
@@ -692,8 +791,11 @@ document.addEventListener('DOMContentLoaded', () => {
     tgApp.haptic.selection();
 
     const tag = tagBtn.dataset.tag;
-    gifSearchInput.value = tag;
-    searchAndRenderGifs(tag, true, false);
+    currentGifQuery = tag;
+    currentGifOffset = 0;
+    currentNextPos = '';
+    gifSearchInput.value = (tag === 'random' || tag === 'trending') ? '' : tag;
+    searchAndRenderGifs(tag, true, false, false, false);
   });
 
   // ==========================================================================

@@ -117,22 +117,33 @@ async def handle_generate_vibe(request: web.Request) -> web.Response:
 async def handle_search_gifs(request: web.Request) -> web.Response:
     """
     GET /api/search-gifs
-    Поиск видео/анимаций для мем-фона.
-    Query-параметры: ?q=cat&limit=10
+    Поиск видео/анимаций для мем-фона с поддержкой пагинации и перемешивания.
+    Query-параметры: ?q=cat&limit=12&offset=0&pos=&shuffle=0
     """
     query = request.query.get("q", "")
-    limit_str = request.query.get("limit", "10")
+    limit_str = request.query.get("limit", "12")
+    offset_str = request.query.get("offset", "0")
+    pos = str(request.query.get("pos", "")).strip()
+    shuffle = request.query.get("shuffle", "false").lower() in ("true", "1", "yes")
 
     try:
         limit = min(int(limit_str), 30)
     except ValueError:
-        limit = 10
+        limit = 12
 
     try:
-        gifs = await search_gifs(query=query, limit=limit)
+        offset = max(int(offset_str), 0)
+    except ValueError:
+        offset = 0
+
+    try:
+        gifs = await search_gifs(query=query, limit=limit, offset=offset, pos=pos, shuffle=shuffle)
         return web.json_response({
             "status": "ok",
-            "gifs": gifs
+            "gifs": list(gifs),
+            "next_pos": getattr(gifs, "next_pos", ""),
+            "offset": getattr(gifs, "offset", offset + len(gifs)),
+            "has_more": getattr(gifs, "has_more", True)
         })
     except Exception as e:
         logger.error(f"Ошибка в handle_search_gifs: {e}")
@@ -142,13 +153,19 @@ async def handle_search_gifs(request: web.Request) -> web.Response:
 async def handle_ai_search_gifs(request: web.Request) -> web.Response:
     """
     POST or GET /api/ai-search-gifs
-    Интеллектуальный поиск видео/гифок с переводом запроса в теги и авто-панчлайном.
+    Интеллектуальный поиск видео/гифок с переводом запроса в теги, авто-панчлайном и пагинацией.
     Принимает JSON (POST) или Query params (GET):
       - query / q: строка запроса на русском или английском
       - limit: количество гифок (по умолчанию 12)
+      - offset: смещение выборки
+      - pos: токен позиции для Tenor API v2
+      - shuffle: флаг перемешивания
     """
     query = ""
     limit = 12
+    offset = 0
+    pos = ""
+    shuffle = False
 
     if request.method == "POST":
         try:
@@ -160,15 +177,33 @@ async def handle_ai_search_gifs(request: web.Request) -> web.Response:
             limit = min(int(body.get("limit", 12)), 30)
         except (ValueError, TypeError):
             limit = 12
+        try:
+            offset = max(int(body.get("offset", 0)), 0)
+        except (ValueError, TypeError):
+            offset = 0
+        pos = str(body.get("pos", "")).strip()
+        shuffle = bool(body.get("shuffle", False))
     else:
         query = str(request.query.get("q") or request.query.get("query") or "").strip()
         try:
             limit = min(int(request.query.get("limit", 12)), 30)
         except (ValueError, TypeError):
             limit = 12
+        try:
+            offset = max(int(request.query.get("offset", 0)), 0)
+        except (ValueError, TypeError):
+            offset = 0
+        pos = str(request.query.get("pos", "")).strip()
+        shuffle = request.query.get("shuffle", "false").lower() in ("true", "1", "yes")
 
     try:
-        result = await ai_search_gifs_pipeline(query=query, limit=limit)
+        result = await ai_search_gifs_pipeline(
+            query=query,
+            limit=limit,
+            offset=offset,
+            pos=pos,
+            shuffle=shuffle
+        )
         return web.json_response({
             "status": "ok",
             **result

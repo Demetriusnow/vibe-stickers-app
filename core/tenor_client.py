@@ -298,25 +298,59 @@ FALLBACK_MEMES: List[Dict[str, Any]] = [
 FALLBACK_MEDIA_POOL = FALLBACK_MEMES
 
 
-def get_fallback_media(query: str = "", limit: int = 10) -> List[Dict[str, Any]]:
-    """Возвращает медиа из локального fallback-каталога (33+ клипа)."""
-    q_lower = query.lower() if query else ""
+class MediaList(list):
+    """Список медиа-результатов с поддержкой метаданных пагинации."""
+    def __init__(self, items, next_pos: str = "", offset: int = 0, has_more: bool = True):
+        super().__init__(items)
+        self.next_pos = next_pos
+        self.offset = offset
+        self.has_more = has_more
+
+
+def get_fallback_media(
+    query: str = "",
+    limit: int = 12,
+    offset: int = 0,
+    shuffle: bool = False
+) -> MediaList:
+    """Возвращает медиа из локального fallback-каталога (33+ клипа) с циклической пагинацией и перемешиванием."""
+    q_lower = query.lower().strip() if query else ""
     q_words = set(q_lower.replace(",", " ").replace("-", " ").split())
 
-    scored = []
-    for meme in FALLBACK_MEMES:
-        tags = set(meme.get("tags", []))
-        matches = len(q_words.intersection(tags))
-        scored.append((matches, meme))
+    if q_lower and q_lower not in ("random", "all", "все"):
+        scored = []
+        for meme in FALLBACK_MEMES:
+            tags = set(meme.get("tags", []))
+            matches = len(q_words.intersection(tags))
+            if any(q in t for q in q_words for t in tags):
+                matches += 1
+            if matches > 0:
+                scored.append((matches, meme))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    matched = [item for score, item in scored if score > 0]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        matched = [item for score, item in scored]
+    else:
+        matched = []
 
     if not matched:
         matched = FALLBACK_MEMES.copy()
-        random.shuffle(matched)
 
-    return [
+    if shuffle:
+        matched_copy = matched.copy()
+        random.shuffle(matched_copy)
+        matched = matched_copy
+
+    total = len(matched)
+    if total == 0:
+        return MediaList([])
+
+    start = offset % total
+    if start + limit <= total:
+        slice_items = matched[start : start + limit]
+    else:
+        slice_items = matched[start:] + matched[: (start + limit) - total]
+
+    res = [
         {
             "id": it["id"],
             "title": it.get("title", "Meme"),
@@ -324,38 +358,42 @@ def get_fallback_media(query: str = "", limit: int = 10) -> List[Dict[str, Any]]
             "preview_url": it.get("preview_url", it["url"]),
             "is_fallback": True
         }
-        for it in matched[:limit]
+        for it in slice_items
     ]
+    return MediaList(res, next_pos="", offset=offset + len(res), has_more=True)
 
 
 async def search_media(
     query: str,
-    limit: int = 10,
+    limit: int = 12,
+    offset: int = 0,
+    pos: str = "",
+    shuffle: bool = False,
     api_key: Optional[str] = None,
     timeout_sec: float = 6.0
-) -> List[Dict[str, Any]]:
+) -> MediaList:
     """
     Поиск зацикленных видео-мемов (MP4/tinymp4):
-    Использует Tenor API v2, если задан ключ, либо обращается к L1-кэшу и локальному пулу.
+    Использует Tenor API v2 с поддержкой pos/offset/shuffle, либо обращается к L1-кэшу и локальному пулу.
     """
     clean_query = (query or "").strip()
     if not clean_query:
-        return get_fallback_media("", limit)
+        return get_fallback_media("", limit=limit, offset=offset, shuffle=shuffle)
 
-    cache_key = clean_query.lower()
+    cache_key = f"{clean_query.lower()}:{offset}:{pos}:{shuffle}"
     now = time.time()
 
-    # Проверка L1 кэша
-    if cache_key in _QUERY_CACHE:
+    # Проверка L1 кэша (только если не запрошен shuffle)
+    if not shuffle and cache_key in _QUERY_CACHE:
         cached_time, cached_results = _QUERY_CACHE[cache_key]
         if now - cached_time < CACHE_TTL_SECONDS:
             logger.info(f"Tenor кэш HIT для '{clean_query}' ({len(cached_results)} шт.)")
-            return cached_results[:limit]
+            return cached_results
 
     actual_key = api_key or DEFAULT_TENOR_KEY or os.getenv("TENOR_API_KEY", "").strip()
 
     if not actual_key or actual_key == "YOUR_TENOR_API_KEY":
-        return get_fallback_media(clean_query, limit)
+        return get_fallback_media(clean_query, limit=limit, offset=offset, shuffle=shuffle)
 
     encoded_query = urllib.parse.quote(clean_query)
     url = (
@@ -367,6 +405,8 @@ async def search_media(
         f"&media_filter=tinymp4,nanomp4,mp4"
         f"&contentfilter=medium"
     )
+    if pos:
+        url += f"&pos={pos}"
 
     try:
         timeout = aiohttp.ClientTimeout(total=timeout_sec)
@@ -375,11 +415,13 @@ async def search_media(
                 if resp.status != 200:
                     err_body = await resp.text()
                     logger.warning(f"Tenor API status {resp.status}: {err_body[:100]}. Fallback.")
-                    return get_fallback_media(clean_query, limit)
+                    return get_fallback_media(clean_query, limit=limit, offset=offset, shuffle=shuffle)
 
                 data = await resp.json()
+                next_pos = data.get("next", "")
+                raw_results = data.get("results", [])
                 results = []
-                for item in data.get("results", []):
+                for item in raw_results:
                     formats = item.get("media_formats", {})
                     # Приоритет MP4 для быстрой конвертации в VP9
                     mp4_data = formats.get("tinymp4") or formats.get("nanomp4") or formats.get("mp4") or {}
@@ -399,31 +441,54 @@ async def search_media(
                         })
 
                 if not results:
-                    return get_fallback_media(clean_query, limit)
+                    return get_fallback_media(clean_query, limit=limit, offset=offset, shuffle=shuffle)
 
-                _QUERY_CACHE[cache_key] = (now, results)
-                return results[:limit]
+                if shuffle:
+                    random.shuffle(results)
+
+                media_list = MediaList(
+                    results[:limit],
+                    next_pos=next_pos,
+                    offset=offset + len(results[:limit]),
+                    has_more=bool(next_pos or len(results) >= limit)
+                )
+
+                if not shuffle:
+                    _QUERY_CACHE[cache_key] = (now, media_list)
+                return media_list
 
     except asyncio.TimeoutError:
         logger.warning(f"Таймаут Tenor API ({timeout_sec}s). Используется Fallback.")
-        return get_fallback_media(clean_query, limit)
+        return get_fallback_media(clean_query, limit=limit, offset=offset, shuffle=shuffle)
     except Exception as e:
         logger.warning(f"Ошибка Tenor API: {e}. Используется Fallback.")
-        return get_fallback_media(clean_query, limit)
+        return get_fallback_media(clean_query, limit=limit, offset=offset, shuffle=shuffle)
 
 
-async def search_gifs(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+async def search_gifs(
+    query: str,
+    limit: int = 12,
+    offset: int = 0,
+    pos: str = "",
+    shuffle: bool = False
+) -> MediaList:
     """Алиас для search_media, совместимый с api/routes.py."""
-    return await search_media(query=query, limit=limit)
+    return await search_media(query=query, limit=limit, offset=offset, pos=pos, shuffle=shuffle)
 
 
-async def ai_search_gifs_pipeline(query: str, limit: int = 12) -> Dict[str, Any]:
+async def ai_search_gifs_pipeline(
+    query: str,
+    limit: int = 12,
+    offset: int = 0,
+    pos: str = "",
+    shuffle: bool = False
+) -> Dict[str, Any]:
     """
     Интеллектуальный конвейер подбора гифок:
     1. Переводит русскоязычные или неточные запросы в семантические английские теги
        через Gemini Flash AI (или локальный эвристический маппинг).
     2. Генерирует остроумный мем-панчлайн (top/bottom text) и подходящий эмодзи.
-    3. Ищет зацикленные видео/гифки в Tenor v2 или локальном пуле 33+ культовых мемов.
+    3. Ищет зацикленные видео/гифки в Tenor v2 или локальном пуле 33+ культовых мемов с поддержкой пагинации и shuffle.
     """
     clean_query = (query or "").strip()
 
@@ -443,22 +508,26 @@ async def ai_search_gifs_pipeline(query: str, limit: int = 12) -> Dict[str, Any]
 
     search_tag = ai_res.get("search_query") or clean_query or "funny meme"
 
-    # 2. Поиск медиа по переведённым тегам
-    gifs = await search_media(query=search_tag, limit=limit)
+    # 2. Поиск медиа по переведённым тегам с пагинацией
+    gifs = await search_media(query=search_tag, limit=limit, offset=offset, pos=pos, shuffle=shuffle)
 
     # Если по специфичному тегу ничего не нашлось, пробуем оригинальный запрос или fallback
     if not gifs and search_tag != clean_query and clean_query:
-        gifs = await search_media(query=clean_query, limit=limit)
+        gifs = await search_media(query=clean_query, limit=limit, offset=offset, pos=pos, shuffle=shuffle)
     if not gifs:
-        gifs = get_fallback_media("random", limit=limit)
+        gifs = get_fallback_media("random", limit=limit, offset=offset, shuffle=shuffle)
 
     return {
+        "status": "ok",
         "query": clean_query,
         "search_query": search_tag,
         "suggested_top": ai_res.get("top_text", ""),
         "suggested_bottom": ai_res.get("bottom_text", ""),
         "emoji": ai_res.get("emoji", "🔥"),
         "is_ai": ai_res.get("is_ai", False),
-        "gifs": gifs
+        "gifs": list(gifs),
+        "next_pos": getattr(gifs, "next_pos", ""),
+        "offset": offset + len(gifs),
+        "has_more": getattr(gifs, "has_more", True)
     }
 

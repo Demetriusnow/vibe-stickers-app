@@ -1075,9 +1075,95 @@ body::before {
   display: block;
 }
 
+@keyframes thumbPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.thumb-item.thumb-anim-enter {
+  animation: thumbPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ==========================================================================
-   Главная кнопка: Добавить в мой стикерпак
+   Панель пагинации и рандомизации гифок
    ========================================================================== */
+.thumbs-pagination-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.thumbs-pagination-bar .btn-cyber-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 22, 38, 0.7);
+  border: 1px solid var(--border-glass-mid);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+}
+
+.thumbs-pagination-bar .btn-cyber-outline:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px var(--neon-cyan-glow);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.thumbs-pagination-bar .btn-cyber-outline:active {
+  transform: scale(0.96);
+}
+
+.thumbs-pagination-bar .btn-more-gifs {
+  flex: 1;
+  justify-content: center;
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.25);
+  color: var(--neon-cyan);
+}
+
+.thumbs-pagination-bar .btn-more-gifs:hover {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: var(--neon-cyan);
+}
+
+.thumbs-pagination-bar .btn-shuffle-gifs {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.25);
+  color: var(--neon-purple);
+}
+
+.thumbs-pagination-bar .btn-shuffle-gifs:hover {
+  background: rgba(168, 85, 247, 0.16);
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 12px var(--neon-purple-glow);
+}
+
+.thumbs-counter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
 .studio-cta-wrap {
   position: sticky;
   bottom: 0;

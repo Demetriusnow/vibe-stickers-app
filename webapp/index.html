@@ -228,11 +228,16 @@
             <!-- Быстрые чипсы тегов -->
             <div class="quick-tags-scroll" id="quickTagsScroll">
               <button class="quick-tag active" data-tag="it">💻 IT-дедлайн</button>
+              <button class="quick-tag" data-tag="trending">🔥 Тренды</button>
+              <button class="quick-tag" data-tag="cat">🐱 Котики</button>
               <button class="quick-tag" data-tag="session">📚 Сессия</button>
               <button class="quick-tag" data-tag="friday">🍻 Пятница</button>
               <button class="quick-tag" data-tag="cringe">💔 Кринж</button>
               <button class="quick-tag" data-tag="success">💸 Успех</button>
-              <button class="quick-tag" data-tag="cat">🐱 Котики</button>
+              <button class="quick-tag" data-tag="cinema">🎬 Кино</button>
+              <button class="quick-tag" data-tag="gaming">🎮 Игры</button>
+              <button class="quick-tag" data-tag="dance">💃 Танцы</button>
+              <button class="quick-tag" data-tag="fail">💀 Фейлы</button>
               <button class="quick-tag" data-tag="random">🎲 Все мемы</button>
             </div>
 
@@ -246,6 +251,19 @@
             <!-- Сетка миниатюр для быстрого выбора фона -->
             <div class="gif-thumbs-grid" id="gifThumbsGrid">
               <!-- Миниатюры заполняются через JS -->
+            </div>
+
+            <!-- Панель управления подборкой гифок (пагинация и рандомизация) -->
+            <div class="thumbs-pagination-bar" id="thumbsPaginationBar">
+              <button type="button" class="btn-cyber-outline btn-more-gifs" id="btnLoadMoreGifs">
+                <span class="btn-icon">➕</span>
+                <span class="btn-text">Показать ещё</span>
+              </button>
+              <button type="button" class="btn-cyber-outline btn-shuffle-gifs" id="btnShuffleGifs" title="Перемешать и показать другие варианты">
+                <span class="btn-icon">🎲</span>
+                <span class="btn-text">Другие варианты</span>
+              </button>
+              <span class="thumbs-counter-label" id="thumbsCounterLabel">Показано: 12</span>
             </div>
           </div>
 

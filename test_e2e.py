@@ -193,15 +193,30 @@ async def test_all():
         assert len(ai_search_data["gifs"]) > 0, "AI search must return gifs"
         assert "suggested_top" in ai_search_data
 
-        # Test GET /api/ai-search-gifs
-        resp = await client.get("/api/ai-search-gifs?q=panic&limit=3")
-        print(f"  GET /api/ai-search-gifs?q=panic -> HTTP {resp.status}")
+        # Test GET /api/ai-search-gifs with pagination
+        resp = await client.get("/api/ai-search-gifs?q=panic&limit=3&offset=3")
+        print(f"  GET /api/ai-search-gifs?q=panic&limit=3&offset=3 -> HTTP {resp.status}")
         assert resp.status == 200, "GET /api/ai-search-gifs should return 200"
         ai_get_data = await resp.json()
         assert ai_get_data["status"] == "ok"
         assert len(ai_get_data["gifs"]) > 0
+        assert "has_more" in ai_get_data, "Response must include 'has_more'"
+        assert "offset" in ai_get_data, "Response must include 'offset'"
 
-        # Verify HTML has Split View & Onboarding elements
+        # Test POST /api/ai-search-gifs with shuffle & pos
+        resp = await client.post("/api/ai-search-gifs", json={
+            "query": "cat",
+            "limit": 4,
+            "offset": 2,
+            "pos": "test_token",
+            "shuffle": True
+        })
+        assert resp.status == 200
+        ai_shuffle_data = await resp.json()
+        assert ai_shuffle_data["status"] == "ok"
+        assert len(ai_shuffle_data["gifs"]) > 0
+
+        # Verify HTML has Split View & Onboarding & Thumbs Pagination elements
         resp = await client.get("/")
         html_content = await resp.text()
         assert "split-viewport" in html_content, "Split View container must be present in HTML"
@@ -209,7 +224,11 @@ async def test_all():
         assert "panel-feed" in html_content, "Feed panel must be present in HTML"
         assert "onboardingGuide" in html_content, "3-step onboarding guide must be present in HTML"
         assert "btnAiGenerate" in html_content, "AI generate button must be present in HTML"
-        print("  [OK] AI GIF Search and Split View layout verification passed!")
+        assert "thumbsPaginationBar" in html_content, "Thumbs pagination bar must be present in HTML"
+        assert "btnLoadMoreGifs" in html_content, "Load more gifs button must be present in HTML"
+        assert "btnShuffleGifs" in html_content, "Shuffle gifs button must be present in HTML"
+        assert "thumbsCounterLabel" in html_content, "Thumbs counter label must be present in HTML"
+        print("  [OK] AI GIF Search, Pagination, Shuffle, and UI controls verification passed!")
 
         print("  [OK] All API endpoints, Upload pipeline and AI Search passed!")
     finally:
