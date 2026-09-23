@@ -286,11 +286,12 @@ def create_text_overlay_png(
     font_family: str = "impact",
     text_color: str = "#FFFFFF",
     stroke_color: str = "#000000",
-    stroke_width: int = 4
+    stroke_width: int = 4,
+    font_size_scale: float = 1.0
 ) -> str:
     """
     Создает прозрачный PNG 512x512 с адаптивным авто-переносом строк,
-    жирным мемным текстом с настраиваемыми цветами и обводкой.
+    жирным мемным текстом с настраиваемыми цветами, обводкой и масштабом шрифта.
     """
     if output_path is None:
         temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
@@ -307,18 +308,21 @@ def create_text_overlay_png(
     draw = ImageDraw.Draw(img)
     max_text_width = size[0] - 56
 
-    initial_font_size = 44 if len(clean_text) < 22 else (36 if len(clean_text) < 42 else 28)
+    scale = max(0.65, min(float(font_size_scale or 1.0), 1.55))
+    base_size = 44 if len(clean_text) < 22 else (36 if len(clean_text) < 42 else 28)
+    initial_font_size = int(base_size * scale)
     font = None
     lines = []
 
-    for test_size in range(initial_font_size, 18, -2):
+    min_size = max(14, int(18 * scale))
+    for test_size in range(initial_font_size, min_size, -2):
         font = _find_best_font(test_size, font_family=font_family)
         candidate_lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=stroke_width)
         if len(candidate_lines) <= 4:
             lines = candidate_lines
             break
     else:
-        font = _find_best_font(20, font_family=font_family)
+        font = _find_best_font(min_size, font_family=font_family)
         lines = _wrap_text_lines(draw, clean_text, font, max_text_width, stroke_width=stroke_width)
 
     line_spacing = 6
@@ -363,9 +367,11 @@ def generate_text_overlay_png(
     font_family: str = "impact",
     text_color: str = "#FFFFFF",
     stroke_color: str = "#000000",
-    stroke_width: int = 4
+    stroke_width: int = 4,
+    font_size_scale: float = 1.0,
+    text_layout: str = "both"
 ) -> str:
-    """Создает прозрачный PNG 512x512 с раздельным верхним и нижним текстом и настраиваемым стилем."""
+    """Создает прозрачный PNG 512x512 с настраиваемым размером, стилем и расположением текста."""
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     max_w = width - 50
@@ -376,8 +382,27 @@ def generate_text_overlay_png(
     fill_rgba = _parse_color(text_color, (255, 255, 255, 255))
     stroke_rgba = _parse_color(stroke_color, (0, 0, 0, 255))
 
-    if top_clean:
-        font_top = _find_best_font(36, font_family=font_family)
+    scale = max(0.65, min(float(font_size_scale or 1.0), 1.55))
+    layout = (text_layout or "both").lower()
+
+    if layout == "center":
+        center_text = f"{top_clean} {bottom_clean}".strip() or bottom_clean or top_clean
+        if center_text:
+            font_center = _find_best_font(int(42 * scale), font_family=font_family)
+            center_lines = _wrap_text_lines(draw, center_text, font_center, max_w, stroke_width=stroke_width)
+            line_heights = [draw.textbbox((0, 0), l, font=font_center, stroke_width=stroke_width)[3] - draw.textbbox((0, 0), l, font=font_center, stroke_width=stroke_width)[1] for l in center_lines]
+            total_h = sum(line_heights) + (len(center_lines) - 1) * 6
+            y_center = (height - total_h) // 2
+            for i, line in enumerate(center_lines):
+                bbox = draw.textbbox((0, 0), line, font=font_center, stroke_width=stroke_width)
+                x = (width - (bbox[2] - bbox[0])) // 2
+                draw.text((x, y_center), line, font=font_center, fill=fill_rgba, stroke_width=stroke_width, stroke_fill=stroke_rgba)
+                y_center += line_heights[i] + 6
+        img.save(output_path, "PNG")
+        return output_path
+
+    if layout in ("both", "top_only") and top_clean:
+        font_top = _find_best_font(int(36 * scale), font_family=font_family)
         top_lines = _wrap_text_lines(draw, top_clean, font_top, max_w, stroke_width=stroke_width)
         y_top = 20
         for line in top_lines:
@@ -386,8 +411,8 @@ def generate_text_overlay_png(
             draw.text((x, y_top), line, font=font_top, fill=fill_rgba, stroke_width=stroke_width, stroke_fill=stroke_rgba)
             y_top += (bbox[3] - bbox[1]) + 6
 
-    if bottom_clean:
-        font_bottom = _find_best_font(40, font_family=font_family)
+    if layout in ("both", "bottom_only") and bottom_clean:
+        font_bottom = _find_best_font(int(40 * scale), font_family=font_family)
         bot_lines = _wrap_text_lines(draw, bottom_clean, font_bottom, max_w, stroke_width=stroke_width)
         line_heights = [draw.textbbox((0, 0), l, font=font_bottom, stroke_width=stroke_width)[3] - draw.textbbox((0, 0), l, font=font_bottom, stroke_width=stroke_width)[1] for l in bot_lines]
         total_h = sum(line_heights) + (len(bot_lines) - 1) * 6
@@ -443,7 +468,9 @@ async def process_sticker(
     bottom_text: str = "",
     font_family: str = "impact",
     text_color: str = "#FFFFFF",
-    stroke_color: str = "#000000"
+    stroke_color: str = "#000000",
+    font_size_scale: float = 1.0,
+    text_layout: str = "both"
 ) -> bytes:
     """
     Основной пайплайн сборки Telegram Video Sticker:
@@ -451,6 +478,7 @@ async def process_sticker(
     - Корректная обработка видео, анимированных GIF и статичных картинок (PNG/JPG).
     - Корректное разрешение путей пользовательских загрузок (webapp/media/uploads/).
     - Наложение прозрачного PNG через Pillow и -filter_complex overlay.
+    - Поддержка шрифтов, цветов, масштаба размера и расположения текста.
     - Автоматический контроль размера файла.
     """
     source = video_source or video_url
@@ -525,16 +553,18 @@ async def process_sticker(
         t_overlay.close()
         temp_files.append(overlay_path)
 
-        if clean_top and clean_bottom:
+        if clean_top or clean_bottom or text_layout == "center":
             generate_text_overlay_png(
                 clean_top, clean_bottom, overlay_path, 512, 512,
-                font_family=font_family, text_color=text_color, stroke_color=stroke_color
+                font_family=font_family, text_color=text_color, stroke_color=stroke_color,
+                font_size_scale=font_size_scale, text_layout=text_layout
             )
         else:
             final_punchline = clean_bottom or clean_top or combined_text
             create_text_overlay_png(
                 final_punchline, overlay_path, (512, 512),
-                font_family=font_family, text_color=text_color, stroke_color=stroke_color
+                font_family=font_family, text_color=text_color, stroke_color=stroke_color,
+                font_size_scale=font_size_scale
             )
 
         # 5. Выходной файл

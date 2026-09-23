@@ -228,7 +228,50 @@ async def test_all():
         assert "btnLoadMoreGifs" in html_content, "Load more gifs button must be present in HTML"
         assert "btnShuffleGifs" in html_content, "Shuffle gifs button must be present in HTML"
         assert "thumbsCounterLabel" in html_content, "Thumbs counter label must be present in HTML"
-        print("  [OK] AI GIF Search, Pagination, Shuffle, and UI controls verification passed!")
+
+        # [Vibe 3.0] HTML checks
+        assert "slangChipsRow" in html_content, "Slang chips row must be present in HTML"
+        assert "inputCustomContext" in html_content, "Custom context input must be present in HTML"
+        assert "btnFontSmaller" in html_content, "Font smaller button must be present in HTML"
+        assert "btnFontBigger" in html_content, "Font bigger button must be present in HTML"
+        assert "layoutChipsRow" in html_content, "Layout chips row must be present in HTML"
+        assert "btnDownloadSticker" in html_content, "Direct download button must be present in HTML"
+        assert "btnShareHeader" in html_content, "Header viral share button must be present in HTML"
+        assert "myPackModal" in html_content, "My pack modal dialog must be present in HTML"
+        print("  [OK] Vibe Stickers 3.0 HTML elements verified!")
+
+        # [Vibe 3.0] Test POST /api/generate-vibe with slang_style and custom_context
+        resp = await client.post("/api/generate-vibe", json={
+            "category": "it",
+            "slang_style": "crypto",
+            "custom_context": "тапаю хомяка"
+        })
+        assert resp.status == 200, "Generate vibe with slang must return 200"
+        slang_vibe_data = await resp.json()
+        print(f"  [Vibe 3.0] Slang Vibe: {slang_vibe_data['vibe']}")
+        assert slang_vibe_data["status"] == "ok"
+        assert len(slang_vibe_data["vibe"]["punchline"]) > 0
+
+        # [Vibe 3.0] Test POST /api/download-sticker
+        resp = await client.post("/api/download-sticker", json={
+            "video_url": "/media/fine_dog.mp4",
+            "top_text": "СКАЧАЛ СТИКЕР",
+            "bottom_text": "БЕЗ РЕГИСТРАЦИИ И СМС",
+            "font_family": "impact",
+            "text_color": "#00F2FE",
+            "stroke_color": "#000000",
+            "font_size_scale": 1.2,
+            "text_layout": "center"
+        })
+        print(f"  POST /api/download-sticker -> HTTP {resp.status}")
+        assert resp.status == 200, "Download sticker should return 200"
+        dl_data = await resp.json()
+        print(f"  Download response: {dl_data}")
+        assert dl_data["status"] == "ok"
+        assert dl_data["download_url"].startswith("/media/uploads/sticker_")
+        assert dl_data["filename"].endswith(".webm")
+        assert dl_data["size_bytes"] > 0
+        print("  [OK] Vibe Stickers 3.0 download endpoint verified!")
 
         print("  [OK] All API endpoints, Upload pipeline and AI Search passed!")
     finally:

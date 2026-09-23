@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const packCounter = document.getElementById('packCounter');
   const packBadge = document.getElementById('packBadge');
   const btnOpenPack = document.getElementById('btnOpenPack');
+  const btnShareHeader = document.getElementById('btnShareHeader');
   const tabStudioBtn = document.getElementById('tabStudioBtn');
   const tabFeedBtn = document.getElementById('tabFeedBtn');
   const panelStudio = document.getElementById('panelStudio');
@@ -127,6 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewLoadingOverlay = document.getElementById('previewLoadingOverlay');
   const previewLoadingText = document.getElementById('previewLoadingText');
 
+  // Сленг ИИ и пользовательский контекст
+  const slangChipsRow = document.getElementById('slangChipsRow');
+  const inputCustomContext = document.getElementById('inputCustomContext');
+
   const studioTopInput = document.getElementById('studioTopInput');
   const studioBottomInput = document.getElementById('studioBottomInput');
   const btnAiGenerate = document.getElementById('btnAiGenerate');
@@ -137,14 +142,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const customFileName = document.getElementById('customFileName');
   const btnRemoveCustomFile = document.getElementById('btnRemoveCustomFile');
 
+  // Типографика и лейаут
+  const btnFontSmaller = document.getElementById('btnFontSmaller');
+  const fontSizeBadge = document.getElementById('fontSizeBadge');
+  const btnFontBigger = document.getElementById('btnFontBigger');
+  const layoutChipsRow = document.getElementById('layoutChipsRow');
+
   const gifSearchInput = document.getElementById('gifSearchInput');
   const btnGifSearch = document.getElementById('btnGifSearch');
   const quickTagsScroll = document.getElementById('quickTagsScroll');
   const gifThumbsGrid = document.getElementById('gifThumbsGrid');
   const btnCommitPack = document.getElementById('btnCommitPack');
+  const btnDownloadSticker = document.getElementById('btnDownloadSticker');
   const btnLoadMoreGifs = document.getElementById('btnLoadMoreGifs');
   const btnShuffleGifs = document.getElementById('btnShuffleGifs');
   const thumbsCounterLabel = document.getElementById('thumbsCounterLabel');
+
+  // Модалка Мой Пак
+  const myPackModal = document.getElementById('myPackModal');
+  const backdropMyPack = document.getElementById('backdropMyPack');
+  const btnCloseMyPack = document.getElementById('btnCloseMyPack');
+  const modalPackCount = document.getElementById('modalPackCount');
+  const inputPackLink = document.getElementById('inputPackLink');
+  const btnCopyPackLink = document.getElementById('btnCopyPackLink');
+  const copyBtnText = document.getElementById('copyBtnText');
+  const btnModalOpenTg = document.getElementById('btnModalOpenTg');
+  const btnModalShare = document.getElementById('btnModalShare');
 
   // Лента
   const categoriesScroll = document.getElementById('categoriesScroll');
@@ -166,6 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fontFamily: "impact",
     textColor: "#FFFFFF",
     strokeColor: "#000000",
+    fontSizeScale: 1.0,
+    textLayout: "both",
+    slangStyle: "zoomer",
+    customContext: "",
     mediaUrl: "/media/fine_dog.mp4",
     isImage: false,
     file: null,
@@ -378,18 +405,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const weight = weightMap[studioState.fontFamily] || "900";
     const color = studioState.textColor || "#FFFFFF";
     const stroke = studioState.strokeColor || "#000000";
+    const scale = studioState.fontSizeScale || 1.0;
+    const layout = studioState.textLayout || "both";
+
+    // Позиционирование контейнера мем-текста
+    const overlay = previewTopText ? previewTopText.parentElement : null;
+    if (overlay) {
+      if (layout === 'center') {
+        overlay.style.justifyContent = 'center';
+        overlay.style.gap = '10px';
+      } else if (layout === 'top_only') {
+        overlay.style.justifyContent = 'flex-start';
+      } else if (layout === 'bottom_only') {
+        overlay.style.justifyContent = 'flex-end';
+      } else {
+        overlay.style.justifyContent = 'space-between';
+      }
+    }
+
+    if (previewTopText) {
+      previewTopText.style.display = (layout === 'bottom_only' || !studioState.topText) ? 'none' : 'block';
+    }
+    if (previewBottomText) {
+      previewBottomText.style.display = (layout === 'top_only' || !studioState.bottomText) ? 'none' : 'block';
+    }
 
     [previewTopText, previewBottomText].forEach(el => {
       if (!el) return;
       el.style.fontFamily = fam;
       el.style.fontWeight = weight;
       el.style.color = color;
+      el.style.fontSize = `calc(clamp(16px, 5vw, 24px) * ${scale})`;
 
       if (stroke === 'none') {
         el.style.webkitTextStroke = '0px';
         el.style.textShadow = '0 2px 8px rgba(0, 0, 0, 0.85)';
       } else {
-        el.style.webkitTextStroke = `2.5px ${stroke}`;
+        el.style.webkitTextStroke = `calc(2.2px * ${Math.min(1.2, scale)}) ${stroke}`;
         el.style.textShadow = stroke === '#000000'
           ? '0 0 10px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.8)'
           : `0 0 12px ${stroke}`;
@@ -409,6 +461,24 @@ document.addEventListener('DOMContentLoaded', () => {
   studioTopInput.addEventListener('input', syncStudioText);
   studioBottomInput.addEventListener('input', syncStudioText);
 
+  // Сленг ИИ и пользовательский контекст
+  if (slangChipsRow) {
+    slangChipsRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.slang-chip');
+      if (!chip) return;
+      slangChipsRow.querySelectorAll('.slang-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      studioState.slangStyle = chip.dataset.slang || 'zoomer';
+      tgApp.haptic.selection();
+    });
+  }
+
+  if (inputCustomContext) {
+    inputCustomContext.addEventListener('input', () => {
+      studioState.customContext = inputCustomContext.value.trim();
+    });
+  }
+
   // Кастомизация стиля текста (Шрифт, Цвет, Обводка)
   const fontChipsRow = document.getElementById('fontChipsRow');
   const textColorPalette = document.getElementById('textColorPalette');
@@ -421,6 +491,38 @@ document.addEventListener('DOMContentLoaded', () => {
       fontChipsRow.querySelectorAll('.font-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       studioState.fontFamily = chip.dataset.font || 'impact';
+      applyTextStyle();
+      tgApp.haptic.selection();
+    });
+  }
+
+  // Управление размером шрифта
+  if (btnFontSmaller) {
+    btnFontSmaller.addEventListener('click', () => {
+      studioState.fontSizeScale = Math.max(0.65, Math.round((studioState.fontSizeScale - 0.15) * 100) / 100);
+      if (fontSizeBadge) fontSizeBadge.textContent = `${Math.round(studioState.fontSizeScale * 100)}%`;
+      applyTextStyle();
+      tgApp.haptic.impact('light');
+    });
+  }
+
+  if (btnFontBigger) {
+    btnFontBigger.addEventListener('click', () => {
+      studioState.fontSizeScale = Math.min(1.55, Math.round((studioState.fontSizeScale + 0.15) * 100) / 100);
+      if (fontSizeBadge) fontSizeBadge.textContent = `${Math.round(studioState.fontSizeScale * 100)}%`;
+      applyTextStyle();
+      tgApp.haptic.impact('light');
+    });
+  }
+
+  // Выбор расположения текста
+  if (layoutChipsRow) {
+    layoutChipsRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.layout-chip');
+      if (!chip) return;
+      layoutChipsRow.querySelectorAll('.layout-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      studioState.textLayout = chip.dataset.layout || 'both';
       applyTextStyle();
       tgApp.haptic.selection();
     });
@@ -491,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tgApp.haptic.impact('medium');
     btnAiGenerate.classList.add('loading');
     previewLoadingOverlay.style.display = 'flex';
-    previewLoadingText.textContent = '🪄 Gemini придумывает вайб...';
+    previewLoadingText.textContent = `🪄 Gemini (${studioState.slangStyle.toUpperCase()}) придумывает вайб...`;
 
     try {
       const activeTagChip = quickTagsScroll.querySelector('.quick-tag.active');
@@ -499,7 +601,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const resp = await apiCall('/api/generate-vibe', 'POST', {
         category: cat,
-        prompt: studioTopInput.value.trim()
+        prompt: studioTopInput.value.trim(),
+        slang_style: studioState.slangStyle || 'zoomer',
+        custom_context: studioState.customContext || ''
       });
 
       if (resp && resp.vibe) {
@@ -518,13 +622,13 @@ document.addEventListener('DOMContentLoaded', () => {
         gifSearchInput.value = query;
         await searchAndRenderGifs(query, true);
 
-        showToast('ИИ придумал мем-панчлайн! 🪄', 'success');
+        showToast('ИИ сгенерировал сленг-панчлайн! 🪄', 'success');
         tgApp.haptic.notification('success');
       }
     } catch (err) {
       console.warn('AI Generate fallback:', err);
       // Локальный фоллбэк
-      const local = getRandomLocalVibe('random');
+      const local = getRandomLocalVibe('random', studioState.customContext);
       studioTopInput.value = local.top_text;
       studioBottomInput.value = local.bottom_text;
       studioState.emoji = local.emoji;
@@ -539,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnRandomText.addEventListener('click', () => {
     tgApp.haptic.impact('light');
-    const local = getRandomLocalVibe('random');
+    const local = getRandomLocalVibe('random', studioState.customContext);
     studioTopInput.value = local.top_text;
     studioBottomInput.value = local.bottom_text;
     studioState.emoji = local.emoji;
@@ -548,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Случайная мем-фраза! 🎲', 'info');
   });
 
-  function getRandomLocalVibe(cat = 'random') {
+  function getRandomLocalVibe(cat = 'random', customWord = '') {
     const keys = Object.keys(LOCAL_VIBE_TEXTS);
     const category = (cat === 'all' || cat === 'random')
       ? keys[Math.floor(Math.random() * keys.length)]
@@ -556,9 +660,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const list = LOCAL_VIBE_TEXTS[category] || LOCAL_VIBE_TEXTS.random;
     const item = list[Math.floor(Math.random() * list.length)];
+    let top = item.top;
+    let bottom = item.bottom;
+    if (customWord) {
+      bottom = `${bottom} (${customWord.toUpperCase()})`;
+    }
     return {
-      top_text: item.top,
-      bottom_text: item.bottom,
+      top_text: top,
+      bottom_text: bottom,
       emoji: item.emoji || '🔥'
     };
   }
@@ -892,7 +1001,9 @@ document.addEventListener('DOMContentLoaded', () => {
         emoji: studioState.emoji || '🔥',
         font_family: studioState.fontFamily || 'impact',
         text_color: studioState.textColor || '#FFFFFF',
-        stroke_color: studioState.strokeColor || '#000000'
+        stroke_color: studioState.strokeColor || '#000000',
+        font_size_scale: studioState.fontSizeScale || 1.0,
+        text_layout: studioState.textLayout || 'both'
       });
 
       if (res && res.is_browser) {
@@ -929,9 +1040,63 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       isSubmitting = false;
       btnCommitPack.classList.remove('loading');
-      btnCommitPack.querySelector('.btn-text-main').textContent = 'Добавить в мой стикерпак';
+      btnCommitPack.querySelector('.btn-text-main').textContent = 'В стикерпак';
     }
   });
+
+  // Прямое скачивание WebM стикера на устройство
+  if (btnDownloadSticker) {
+    btnDownloadSticker.addEventListener('click', async () => {
+      const top = studioTopInput.value.trim();
+      const bottom = studioBottomInput.value.trim();
+
+      if (!top && !bottom) {
+        showToast('Введи хотя бы верхний или нижний текст!', 'error');
+        studioTopInput.focus();
+        return;
+      }
+
+      btnDownloadSticker.classList.add('loading');
+      btnDownloadSticker.querySelector('.btn-text-dl').textContent = 'Рендер...';
+      tgApp.haptic.impact('medium');
+      showToast('Сборка WebM видео-стикера... ⚙️', 'info');
+
+      try {
+        if (studioState.uploadPromise) {
+          showToast('Ожидание загрузки медиа...', 'info');
+          await studioState.uploadPromise;
+        }
+
+        const res = await apiCall('/api/download-sticker', 'POST', {
+          video_url: studioState.mediaUrl,
+          top_text: top,
+          bottom_text: bottom,
+          font_family: studioState.fontFamily || 'impact',
+          text_color: studioState.textColor || '#FFFFFF',
+          stroke_color: studioState.strokeColor || '#000000',
+          font_size_scale: studioState.fontSizeScale || 1.0,
+          text_layout: studioState.textLayout || 'both'
+        });
+
+        if (res && res.download_url) {
+          const a = document.createElement('a');
+          a.href = res.download_url;
+          a.download = res.filename || 'vibe_sticker.webm';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showToast('Стикер скачан на устройство! 📥', 'success');
+          tgApp.haptic.notification('success');
+        }
+      } catch (err) {
+        console.error('Download error:', err);
+        showToast(err.message || 'Ошибка сборки файла', 'error');
+      } finally {
+        btnDownloadSticker.classList.remove('loading');
+        btnDownloadSticker.querySelector('.btn-text-dl').textContent = 'Скачать';
+      }
+    });
+  }
 
   // ==========================================================================
   // Правая панель: Лента готовых стикеров
@@ -1094,25 +1259,87 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await apiCall('/api/pack-info');
       if (data.count !== undefined) {
         packCounter.textContent = data.count;
+        if (modalPackCount) modalPackCount.textContent = data.count;
       }
       if (data.pack_link) {
         packLink = data.pack_link;
+        if (inputPackLink) inputPackLink.value = data.pack_link;
       }
     } catch (e) {
       const saved = localStorage.getItem('vibe_pack_count') || '0';
       packCounter.textContent = saved;
+      if (modalPackCount) modalPackCount.textContent = saved;
     }
   }
 
-  btnOpenPack.addEventListener('click', () => {
-    tgApp.haptic.impact('light');
-    if (packLink) {
-      tgApp.openStickerPack(packLink);
+  // Вирусный шеринг пака в Telegram
+  function sharePack() {
+    tgApp.haptic.impact('medium');
+    const link = packLink || `https://t.me/addstickers/v_${user.id || 'user'}_by_vibebot`;
+    const shareText = `Чекни мой стикерпак сгенерированный в @vibestick_bot! 🔥 Создай свой за пару секунд:`;
+    const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(shareText)}`;
+
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(tgShareUrl);
+    } else if (navigator.share) {
+      navigator.share({
+        title: 'Мой Vibe Стикерпак',
+        text: shareText,
+        url: link
+      }).catch(() => {});
     } else {
-      const fallbackUrl = `https://t.me/addstickers/v_${user.id || 'user'}_by_vibebot`;
-      tgApp.openStickerPack(fallbackUrl);
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('Ссылка на стикерпак скопирована! 📋', 'success');
+      });
     }
-  });
+  }
+
+  function openMyPackModal() {
+    tgApp.haptic.impact('light');
+    if (!myPackModal) return;
+    const cur = packCounter.textContent || '0';
+    if (modalPackCount) modalPackCount.textContent = cur;
+    const link = packLink || `https://t.me/addstickers/v_${user.id || 'user'}_by_vibebot`;
+    if (inputPackLink) inputPackLink.value = link;
+    myPackModal.style.display = 'flex';
+  }
+
+  function closeMyPackModal() {
+    if (myPackModal) myPackModal.style.display = 'none';
+  }
+
+  if (packBadge) packBadge.addEventListener('click', openMyPackModal);
+  if (btnOpenPack) btnOpenPack.addEventListener('click', openMyPackModal);
+  if (btnShareHeader) btnShareHeader.addEventListener('click', sharePack);
+
+  if (btnCloseMyPack) btnCloseMyPack.addEventListener('click', closeMyPackModal);
+  if (backdropMyPack) backdropMyPack.addEventListener('click', closeMyPackModal);
+
+  if (btnCopyPackLink) {
+    btnCopyPackLink.addEventListener('click', () => {
+      const link = (inputPackLink ? inputPackLink.value : '') || packLink;
+      navigator.clipboard.writeText(link).then(() => {
+        if (copyBtnText) copyBtnText.textContent = 'Скопировано! ✓';
+        showToast('Ссылка на стикерпак скопирована! 📋', 'success');
+        tgApp.haptic.notification('success');
+        setTimeout(() => {
+          if (copyBtnText) copyBtnText.textContent = 'Копия';
+        }, 2000);
+      });
+    });
+  }
+
+  if (btnModalOpenTg) {
+    btnModalOpenTg.addEventListener('click', () => {
+      tgApp.haptic.impact('light');
+      const link = packLink || `https://t.me/addstickers/v_${user.id || 'user'}_by_vibebot`;
+      tgApp.openStickerPack(link);
+    });
+  }
+
+  if (btnModalShare) {
+    btnModalShare.addEventListener('click', sharePack);
+  }
 
   // ==========================================================================
   // Первоначальный запуск

@@ -28,15 +28,74 @@ CATEGORIES = {
     "cringe_love": "Отношения / Кринж / Неловкие ситуации",
     "money_success": "Деньги / Успех / Крах или богатство",
     "random_vibe": "Случайный вайб / Абсурдный постироничный юмор",
+    "zoomer": "Зумерский сленг / ТикТок / Мемы",
+    "dev": "IT / Разработка / Прогеры",
+    "crypto": "Темщики / Крипта / Суета",
+    "corporate": "Офис / Корпорат / Синк",
+    "postirony": "Постирония / Абсурд",
+}
+
+# 5 ключевых стилей сленга для генерации
+SLANG_STYLES = {
+    "zoomer": {
+        "id": "zoomer",
+        "name": "⚡ Зум / ТикТок",
+        "icon": "⚡",
+        "keywords": ["база", "имба", "скуф", "альтушка", "сигма", "кринж", "рил", "чиназес", "жиза", "тяги", "тюбик"],
+        "tone": "Используй сочный молодежный зумерский мемный сленг: 'БАЗА', 'ИМБА', 'СКУФ', 'АЛЬТУШКА', 'СИГМА', 'ЧИНАЗЕС', 'КРИНЖ', 'РИЛ', 'ТЮБИК', 'ТЯГИ', 'ЖИЗА'."
+    },
+    "dev": {
+        "id": "dev",
+        "name": "💻 IT & Dev",
+        "icon": "💻",
+        "keywords": ["прод", "костыль", "деплой", "легаси", "ревьюер", "таска", "созвон", "синьор", "баг", "фикс"],
+        "tone": "Используй суровый айтишный и девелоперский сленг: 'ПРОД УПАЛ', 'КОСТЫЛЬ', 'ДЕПЛОЙ В ПЯТНИЦУ', 'ЛЕГАСИ', 'РЕВЬЮЕР ДУШИТ', 'ТАСКА ГОРИТ', 'СИНЬОР В СЛЕЗАХ'."
+    },
+    "crypto": {
+        "id": "crypto",
+        "name": "💸 Темщики / Крипта",
+        "icon": "💸",
+        "keywords": ["темка", "воркаем", "суета", "туземун", "ликвиднуло", "холдим", "не мамонт", "прибыль", "ракета"],
+        "tone": "Используй дерзкий сленг темщиков, суетологов и криптанов: 'ВОРКАЕМ', 'ТЕМКА ЗАШЛА', 'СУЕТА', 'ТУЗЕМУН', 'ЛИКВИДНУЛО', 'ХОЛДИМ', 'НЕ МАМОНТ', 'ФИКСАНУЛ'."
+    },
+    "corporate": {
+        "id": "corporate",
+        "name": "🍷 Офис / Корпорат",
+        "icon": "🍷",
+        "keywords": ["синк", "услышал", "аппрув", "коллеги", "дедлайн", "созвон", "фидбек", "асап"],
+        "tone": "Используй офисный пассивно-агрессивный корпоративный сленг: 'Я ВАС УСЛЫШАЛ', 'ДАВАЙТЕ СИНКНЕМСЯ', 'КОЛЛЕГИ, ДОБРЫЙ ДЕНЬ', 'ДЕДЛАЙН ВЧЕРА', 'АППРУВНИТЕ ТАСКУ'."
+    },
+    "postirony": {
+        "id": "postirony",
+        "name": "🗿 Постирония / Абсурд",
+        "icon": "🗿",
+        "keywords": ["понел", "волк", "думайте", "чилл", "бебра", "гигачад", "чисто я"],
+        "tone": "Используй глубокую постиронию и мемный абсурд: 'ПОНЕЛ ЗРЯ БЫКАСАНУЛ', 'ВОЛК СЛАБЕЕ ЛЬВА', 'ДУМАЙТЕ', 'ЧИЛЛ', 'БЕБРА', 'ЧИСТО Я', 'ГИГАЧАД'."
+    }
 }
 
 # Синонимы и алиасы для маппинга входящих категорий
 CATEGORY_ALIASES = {
-    "it": "it_deadline",
-    "deadline": "it_deadline",
-    "айти": "it_deadline",
-    "дедлайн": "it_deadline",
-    "прод": "it_deadline",
+    "it": "dev",
+    "deadline": "dev",
+    "айти": "dev",
+    "дедлайн": "dev",
+    "прод": "dev",
+    "dev": "dev",
+    "zoomer": "zoomer",
+    "зум": "zoomer",
+    "зумер": "zoomer",
+    "tiktok": "zoomer",
+    "crypto": "crypto",
+    "крипта": "crypto",
+    "темщик": "crypto",
+    "темка": "crypto",
+    "corporate": "corporate",
+    "офис": "corporate",
+    "корпорат": "corporate",
+    "postirony": "postirony",
+    "постирония": "postirony",
+    "абсурд": "postirony",
     "session": "study_exam",
     "study": "study_exam",
     "exam": "study_exam",
@@ -52,12 +111,11 @@ CATEGORY_ALIASES = {
     "кринж": "cringe_love",
     "отношения": "cringe_love",
     "любовь": "cringe_love",
-    "money": "money_success",
-    "success": "money_success",
-    "деньги": "money_success",
-    "успех": "money_success",
-    "крипта": "money_success",
-    "богатство": "money_success",
+    "money": "crypto",
+    "success": "crypto",
+    "деньги": "crypto",
+    "успех": "crypto",
+    "богатство": "crypto",
     "random": "random_vibe",
     "случайный": "random_vibe",
     "рандом": "random_vibe",
@@ -286,15 +344,194 @@ FALLBACK_VIBES: Dict[str, list] = {
             "gif_query": "dog this is fine fire room",
             "emoji": "☕"
         }
+    ],
+    "zoomer": [
+        {
+            "punchline": "ЭТО БАЗА, ДРУГОГО НЕ ДАНО",
+            "top_text": "ЭТО БАЗА",
+            "bottom_text": "ИМБА И ТОЧКА",
+            "search_query": "gigachad chad smile nod",
+            "gif_query": "gigachad chad smile nod",
+            "emoji": "🗿"
+        },
+        {
+            "punchline": "ЧИНАЗЕС, СЮДА ЭТИ БАРХАТНЫЕ ТЯГИ",
+            "top_text": "ЧИНАЗЕС",
+            "bottom_text": "СЮДА ЭТИ БАРХАТНЫЕ ТЯГИ",
+            "search_query": "shoes dance fancy happy",
+            "gif_query": "shoes dance fancy happy",
+            "emoji": "👞"
+        },
+        {
+            "punchline": "ЧИСТО СКУФ В ПОИСКАХ АЛЬТУШКИ",
+            "top_text": "ЧИСТО СКУФ",
+            "bottom_text": "В ПОИСКАХ АЛЬТУШКИ",
+            "search_query": "shrek mirror meme funny",
+            "gif_query": "shrek mirror meme funny",
+            "emoji": "🧌"
+        },
+        {
+            "punchline": "СИГМА ВАЙБ В 3 ЧАСА НОЧИ",
+            "top_text": "СИГМА ВАЙБ",
+            "bottom_text": "МОЛЧА ДЕЛАЮ ДЕЛА",
+            "search_query": "patrick bateman listening music walking",
+            "gif_query": "patrick bateman listening music walking",
+            "emoji": "🎧"
+        },
+        {
+            "punchline": "РИЛ ЖИЗА БЕЗ КРИНЖА",
+            "top_text": "РИЛ ЖИЗА",
+            "bottom_text": "БЕЗ ЛИШНЕГО КРИНЖА",
+            "search_query": "nodding cat rhythm cool",
+            "gif_query": "nodding cat rhythm cool",
+            "emoji": "🐱"
+        }
+    ],
+    "dev": [
+        {
+            "punchline": "ПРОД УПАЛ, СИНЬОР В СЛЕЗАХ",
+            "top_text": "ПРОД УПАЛ",
+            "bottom_text": "СИНЬОР В СЛЕЗАХ",
+            "search_query": "fire disaster explosion cat",
+            "gif_query": "fire disaster explosion cat",
+            "emoji": "🔥"
+        },
+        {
+            "punchline": "ОДИН КОСТЫЛЬ ДЕРЖИТ ВЕСЬ БИЗНЕС",
+            "top_text": "ОДИН КОСТЫЛЬ",
+            "bottom_text": "ДЕРЖИТ ВЕСЬ БИЗНЕС",
+            "search_query": "jenga tower falling balance",
+            "gif_query": "jenga tower falling balance",
+            "emoji": "🪵"
+        },
+        {
+            "punchline": "РЕВЬЮЕР ДУШИТ ТРЕТИЙ ДЕНЬ",
+            "top_text": "РЕВЬЮЕР ДУШИТ",
+            "bottom_text": "ПРИДИРКА К ПРОБЕЛАМ",
+            "search_query": "nerd glasses talking boring",
+            "gif_query": "nerd glasses talking boring",
+            "emoji": "🤓"
+        },
+        {
+            "punchline": "GIT PUSH --FORCE И УДАЛИЛ ТЕЛЕГРАМ",
+            "top_text": "GIT PUSH --FORCE",
+            "bottom_text": "И УДАЛИЛ ТЕЛЕГРАМ",
+            "search_query": "running away fast smoke",
+            "gif_query": "running away fast smoke",
+            "emoji": "🏃‍♂️"
+        }
+    ],
+    "crypto": [
+        {
+            "punchline": "ТЕМКА ЗАШЛА, СУЕТА НА МИЛЛИОН",
+            "top_text": "ТЕМКА ЗАШЛА",
+            "bottom_text": "СУЕТА НА МИЛЛИОН",
+            "search_query": "wolf of wall street clapping money",
+            "gif_query": "wolf of wall street clapping money",
+            "emoji": "💸"
+        },
+        {
+            "punchline": "ЛИКВИДНУЛО В НОЛЬ, ХОЛДИМ ДО ТАЛОГО",
+            "top_text": "ЛИКВИДНУЛО В НОЛЬ",
+            "bottom_text": "ХОЛДИМ ДО ТАЛОГО",
+            "search_query": "pepe crying depression rain",
+            "gif_query": "pepe crying depression rain",
+            "emoji": "📉"
+        },
+        {
+            "punchline": "ТУЗЕМУН ОТМЕНИЛСЯ, РЕЗЮМЕ НА ЗАВОД",
+            "top_text": "ТУЗЕМУН ОТМЕНИЛСЯ",
+            "bottom_text": "РЕЗЮМЕ НА ЗАВОД ГОТОВО",
+            "search_query": "worker hard hat tired",
+            "gif_query": "worker hard hat tired",
+            "emoji": "🏭"
+        },
+        {
+            "punchline": "НЕ МАМОНТ, ЗАТО С ОПЫТОМ",
+            "top_text": "НЕ МАМОНТ",
+            "bottom_text": "ЗАТО С ОПЫТОМ",
+            "search_query": "clown putting makeup mirror",
+            "gif_query": "clown putting makeup mirror",
+            "emoji": "🤡"
+        }
+    ],
+    "corporate": [
+        {
+            "punchline": "Я ВАС УСЛЫШАЛ И ВЫБРОСИЛ",
+            "top_text": "Я ВАС УСЛЫШАЛ",
+            "bottom_text": "СПАСИБО ЗА ВАШЕ МНЕНИЕ",
+            "search_query": "fake smile nodding dead eyes",
+            "gif_query": "fake smile nodding dead eyes",
+            "emoji": "🙃"
+        },
+        {
+            "punchline": "ДАВАЙТЕ СИНКНЕМСЯ НА СОЗВОН О СОЗВОНЕ",
+            "top_text": "ДАВАЙТЕ СИНКНЕМСЯ",
+            "bottom_text": "ЧТОБЫ НАЗНАЧИТЬ СОЗВОН",
+            "search_query": "bored office meeting sleeping",
+            "gif_query": "bored office meeting sleeping",
+            "emoji": "🥱"
+        },
+        {
+            "punchline": "КОЛЛЕГИ, ДЕДЛАЙН СГОРЕЛ ВЧЕРА",
+            "top_text": "ДОБРЫЙ ДЕНЬ, КОЛЛЕГИ",
+            "bottom_text": "ДЕДЛАЙН СГОРЕЛ ВЧЕРА",
+            "search_query": "skeleton typing desk waiting",
+            "gif_query": "skeleton typing desk waiting",
+            "emoji": "💀"
+        },
+        {
+            "punchline": "АППРУВНИТЕ ТАСКУ, ПЯТНИЦА 17:59",
+            "top_text": "АППРУВНИТЕ ТАСКУ",
+            "bottom_text": "ПЯТНИЦА 17:59",
+            "search_query": "praying hands please begging",
+            "gif_query": "praying hands please begging",
+            "emoji": "🙏"
+        }
+    ],
+    "postirony": [
+        {
+            "punchline": "ПОНЕЛ ЗРЯ БЫКАСАНУЛ",
+            "top_text": "ПОНЕЛ",
+            "bottom_text": "ЗРЯ БЫКАСАНУЛ",
+            "search_query": "moai stone regret silence",
+            "gif_query": "moai stone regret silence",
+            "emoji": "🗿"
+        },
+        {
+            "punchline": "ВОЛК СЛАБЕЕ ЛЬВА, ДУМАЙТЕ",
+            "top_text": "ВОЛК СЛАБЕЕ ЛЬВА",
+            "bottom_text": "ДУМАЙТЕ",
+            "search_query": "wolf moon howling deep",
+            "gif_query": "wolf moon howling deep",
+            "emoji": "🐺"
+        },
+        {
+            "punchline": "ЧИСТО ЧИЛЛ, ХОТЯ ДОМ ГОРИТ",
+            "top_text": "ЧИСТО ЧИЛЛ",
+            "bottom_text": "ХОТЯ ДОМ ГОРИТ",
+            "search_query": "dog this is fine burning coffee",
+            "gif_query": "dog this is fine burning coffee",
+            "emoji": "☕"
+        },
+        {
+            "punchline": "БЕБРА МОМЕНТ 10 ИЗ 10",
+            "top_text": "БЕБРА МОМЕНТ",
+            "bottom_text": "ЧИСТО Я В ПОНЕДЕЛЬНИК",
+            "search_query": "spinning dancing hamster",
+            "gif_query": "spinning dancing hamster",
+            "emoji": "🐹"
+        }
     ]
 }
 
 # Поддержка коротких алиасов в словаре
-FALLBACK_VIBES["it"] = FALLBACK_VIBES["it_deadline"]
+FALLBACK_VIBES["it"] = FALLBACK_VIBES["dev"]
 FALLBACK_VIBES["session"] = FALLBACK_VIBES["study_exam"]
 FALLBACK_VIBES["friday"] = FALLBACK_VIBES["friday_evening"]
 FALLBACK_VIBES["cringe"] = FALLBACK_VIBES["cringe_love"]
-FALLBACK_VIBES["success"] = FALLBACK_VIBES["money_success"]
+FALLBACK_VIBES["success"] = FALLBACK_VIBES["crypto"]
+FALLBACK_VIBES["money"] = FALLBACK_VIBES["crypto"]
 FALLBACK_VIBES["random"] = FALLBACK_VIBES["random_vibe"]
 
 
@@ -312,19 +549,37 @@ def normalize_category(category: str) -> str:
     return "random_vibe"
 
 
-def get_fallback_vibe(category: str = "all") -> Dict[str, Any]:
-    """Возвращает проверенный вайб из оффлайн-каталога."""
-    cat_key = category.lower() if category.lower() in FALLBACK_VIBES else None
-    if not cat_key or cat_key == "all":
-        norm_key = normalize_category(category)
-        items = FALLBACK_VIBES.get(norm_key) or FALLBACK_VIBES["random_vibe"]
-        selected = random.choice(items).copy()
+def get_fallback_vibe(
+    category: str = "all",
+    slang_style: str = "zoomer",
+    custom_context: str = ""
+) -> Dict[str, Any]:
+    """Возвращает проверенный вайб из оффлайн-каталога с учетом сленга и кастомного контекста."""
+    pool_key = None
+    if slang_style and slang_style in FALLBACK_VIBES:
+        pool_key = slang_style
+    elif category and category.lower() in FALLBACK_VIBES:
+        pool_key = category.lower()
     else:
-        selected = random.choice(FALLBACK_VIBES[cat_key]).copy()
+        norm_key = normalize_category(category)
+        pool_key = norm_key if norm_key in FALLBACK_VIBES else "random_vibe"
 
-    punchline = selected.get("punchline") or selected.get("bottom_text") or "МЕМНЫЙ ВАЙБ"
+    items = FALLBACK_VIBES.get(pool_key) or FALLBACK_VIBES["random_vibe"]
+    selected = random.choice(items).copy()
+
     top_text = selected.get("top_text") or ""
-    bottom_text = selected.get("bottom_text") or punchline
+    bottom_text = selected.get("bottom_text") or selected.get("punchline") or "МЕМНЫЙ ВАЙБ"
+
+    # Если пользователь передал локальные шутки или контекст чата
+    if custom_context and custom_context.strip():
+        ctx_word = custom_context.strip().upper()
+        if len(ctx_word) > 25:
+            ctx_word = ctx_word[:25]
+        top_text = f"КОГДА {ctx_word}"
+        punchline = f"{top_text}: {bottom_text}"
+    else:
+        punchline = selected.get("punchline") or f"{top_text} {bottom_text}".strip()
+
     search_query = selected.get("search_query") or selected.get("gif_query") or "funny meme reaction"
     emoji = selected.get("emoji") or "🔥"
 
@@ -335,7 +590,8 @@ def get_fallback_vibe(category: str = "all") -> Dict[str, Any]:
         "top_text": top_text,
         "bottom_text": bottom_text,
         "gif_query": search_query,
-        "category": cat_key or "random_vibe",
+        "category": pool_key,
+        "slang_style": slang_style,
         "is_fallback": True
     }
 
@@ -343,10 +599,12 @@ def get_fallback_vibe(category: str = "all") -> Dict[str, Any]:
 async def generate_vibe_ai(
     prompt: str = "",
     category: str = "all",
+    slang_style: str = "zoomer",
+    custom_context: str = "",
     api_key: Optional[str] = None,
     timeout_sec: float = 4.0
 ) -> Dict[str, Any]:
-    """Генерация через официальный REST API Google Gemini 1.5 Flash."""
+    """Генерация через официальный REST API Google Gemini 1.5 Flash с поддержкой сленга и контекста."""
     actual_key = api_key or DEFAULT_GEMINI_KEY or os.getenv("GEMINI_API_KEY", "").strip()
     if not actual_key or actual_key == "YOUR_GEMINI_API_KEY":
         raise ValueError("GEMINI_API_KEY не установлен.")
@@ -354,12 +612,22 @@ async def generate_vibe_ai(
     norm_category = normalize_category(category)
     category_desc = CATEGORIES.get(norm_category, "Случайный мемный вайб")
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={actual_key}"
+    slang_info = SLANG_STYLES.get(slang_style, SLANG_STYLES["zoomer"])
+    slang_tone = slang_info["tone"]
+
+    custom_context_instruction = ""
+    if custom_context and custom_context.strip():
+        custom_context_instruction = (
+            f" ОБЯЗАТЕЛЬНО учти локальный контекст/шутки пользователя: '{custom_context.strip()}'. "
+            "Используй слова или тему из этого контекста в панчлайне!"
+        )
 
     system_instruction = (
         "Ты — генератор коротких, смешных и вирусных мем-стикеров для Telegram. "
+        f"Стиль и тональность речи: {slang_tone}."
+        f"{custom_context_instruction} "
         f"Категория вайба: {category_desc}. "
-        "Сгенерируй короткую панч-фразу (до 6-8 слов CAPS), верхний и нижний текст, эмодзи и 2-3 ключевых слова "
+        "Сгенерируй короткую панч-фразу (до 5-7 слов CAPS), верхний и нижний текст, эмодзи и 2-3 ключевых слова "
         "на английском для поиска видеомема на Tenor (описывай действие, реакцию или персонажа). "
         "Ответ верни СТРОГО в формате JSON:\n"
         "{\n"
@@ -371,7 +639,7 @@ async def generate_vibe_ai(
         "}"
     )
 
-    user_query = f"Тема: {category_desc}. Контекст от пользователя: {prompt or 'сгенерируй случайный популярный мем'}"
+    user_query = f"Тема: {category_desc}. Сленг: {slang_info['name']}. Контекст от пользователя: {prompt or custom_context or 'сгенерируй случайный популярный мем'}"
 
     payload = {
         "contents": [
@@ -383,7 +651,7 @@ async def generate_vibe_ai(
             }
         ],
         "generationConfig": {
-            "temperature": 0.85,
+            "temperature": 0.88,
             "responseMimeType": "application/json",
             "response_mime_type": "application/json"
         }
@@ -423,6 +691,7 @@ async def generate_vibe_ai(
                         "bottom_text": bottom_text,
                         "gif_query": search_query,
                         "category": norm_category,
+                        "slang_style": slang_style,
                         "is_fallback": False
                     }
             except Exception as e:
@@ -432,17 +701,18 @@ async def generate_vibe_ai(
     raise RuntimeError(last_err or "Все модели Gemini недоступны.")
 
 
-
 async def generate_vibe(
     category: str = "random",
     custom_prompt: str = "",
     prompt: str = "",
+    slang_style: str = "zoomer",
+    custom_context: str = "",
     api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Основная функция генерации вайба:
+    Основная функция генерации вайба с поддержкой сленга:
     Пытается вызвать Gemini Flash API, при отсутствии ключа или ошибке
-    бесшовно возвращает вайб из встроенного каталога.
+    бесшовно возвращает вайб из встроенного сленгового каталога.
     """
     user_prompt = (custom_prompt or prompt or "").strip()
     actual_key = api_key or DEFAULT_GEMINI_KEY or os.getenv("GEMINI_API_KEY", "").strip()
@@ -452,12 +722,14 @@ async def generate_vibe(
             return await generate_vibe_ai(
                 prompt=user_prompt,
                 category=category,
+                slang_style=slang_style,
+                custom_context=custom_context,
                 api_key=actual_key
             )
         except Exception as e:
             logger.warning(f"Ошибка Gemini Flash API: {e}. Используем Fallback каталог.")
 
-    return get_fallback_vibe(category)
+    return get_fallback_vibe(category=category, slang_style=slang_style, custom_context=custom_context)
 
 
 # ==============================================================================

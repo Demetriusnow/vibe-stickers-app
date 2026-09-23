@@ -30,7 +30,7 @@
 
       <div class="header-actions">
         <!-- Счетчик добавленных стикеров -->
-        <div class="pack-badge" id="packBadge" title="Количество стикеров в твоем персональном паке">
+        <div class="pack-badge" id="packBadge" title="Мой персональный стикерпак">
           <span class="badge-fire">🔥</span>
           <span class="badge-text"><strong id="packCounter">0</strong><span class="badge-max">/120</span></span>
         </div>
@@ -41,6 +41,11 @@
             <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
           </svg>
           <span>Пак</span>
+        </button>
+
+        <!-- Кнопка вирусного шеринга -->
+        <button class="btn-share-header" id="btnShareHeader" title="Поделиться стикерпаком с друзьями">
+          <span class="btn-share-icon">🚀</span>
         </button>
       </div>
     </header>
@@ -137,11 +142,34 @@
             </div>
           </div>
 
-          <!-- Блок полей ввода текста мема -->
+          <!-- Блок полей ввода текста мема и ИИ сленга -->
           <div class="studio-section studio-text-section">
             <div class="section-label">
               <span class="label-icon">✍️</span>
               <span>Текст мема</span>
+            </div>
+
+            <!-- Стиль юмора / Сленг ИИ -->
+            <div class="slang-engine-section">
+              <div class="slang-header-row">
+                <span class="slang-label"><span class="label-icon">⚡</span> Стиль юмора / Сленг:</span>
+              </div>
+              <div class="slang-chips-row" id="slangChipsRow">
+                <button type="button" class="slang-chip active" data-slang="zoomer">⚡ Зум / TikTok</button>
+                <button type="button" class="slang-chip" data-slang="dev">💻 IT / Дев</button>
+                <button type="button" class="slang-chip" data-slang="crypto">💸 Темщик / Крипта</button>
+                <button type="button" class="slang-chip" data-slang="corporate">🍷 Корпорат</button>
+                <button type="button" class="slang-chip" data-slang="postirony">🗿 Абсурд</button>
+              </div>
+
+              <!-- Пользовательский контекст / Локальные шутки чата -->
+              <div class="custom-context-wrap">
+                <div class="input-cyber-row input-context-row">
+                  <span class="context-prefix-icon">🎯</span>
+                  <input type="text" id="inputCustomContext" class="input-cyber input-cyber-sm" placeholder="Свой сленг / шутки чата (напр. 'квадроберы, тюбик')..." maxlength="60" autocomplete="off">
+                  <button type="button" class="btn-input-clear" data-target="inputCustomContext" title="Очистить">✕</button>
+                </div>
+              </div>
             </div>
 
             <div class="input-cyber-group">
@@ -167,8 +195,30 @@
                 </div>
               </div>
 
+              <!-- Размер шрифта и позиционирование -->
+              <div class="style-row typography-row">
+                <div class="typography-col">
+                  <span class="style-row-label">Размер:</span>
+                  <div class="size-control-group">
+                    <button type="button" class="btn-size-step" id="btnFontSmaller" title="Уменьшить шрифт">A−</button>
+                    <span class="font-size-badge" id="fontSizeBadge">100%</span>
+                    <button type="button" class="btn-size-step" id="btnFontBigger" title="Увеличить шрифт">A+</button>
+                  </div>
+                </div>
+
+                <div class="typography-col layout-col">
+                  <span class="style-row-label">Позиция:</span>
+                  <div class="layout-chips-row" id="layoutChipsRow">
+                    <button type="button" class="layout-chip active" data-layout="both" title="Сверху и снизу">↕️ Оба</button>
+                    <button type="button" class="layout-chip" data-layout="center" title="По центру">⏹️ Центр</button>
+                    <button type="button" class="layout-chip" data-layout="top_only" title="Только верх">⬆️ Верх</button>
+                    <button type="button" class="layout-chip" data-layout="bottom_only" title="Только низ">⬇️ Низ</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="style-row">
-                <span class="style-row-label">Цвет текста:</span>
+                <span class="style-row-label">Цвет:</span>
                 <div class="color-palette-row" id="textColorPalette">
                   <button type="button" class="color-dot active" data-color="#FFFFFF" style="background: #FFFFFF;" title="Белый"></button>
                   <button type="button" class="color-dot" data-color="#FFE600" style="background: #FFE600;" title="Жёлтый"></button>
@@ -267,13 +317,19 @@
             </div>
           </div>
 
-          <!-- Финальная кнопка: Добавить стикер в пак -->
+          <!-- Финальные кнопки: Добавить стикер в пак + Прямое скачивание -->
           <div class="studio-cta-wrap">
             <button type="button" class="btn-cyber-primary btn-commit-pack" id="btnCommitPack">
               <span class="btn-neon-glow"></span>
               <span class="btn-content">
                 <span class="btn-icon-fire">🔥</span>
-                <span class="btn-text-main">Добавить в мой стикерпак</span>
+                <span class="btn-text-main">В стикерпак</span>
+              </span>
+            </button>
+            <button type="button" class="btn-cyber-download" id="btnDownloadSticker" title="Скачать WebM видео-стикер напрямую на устройство">
+              <span class="btn-content">
+                <span class="btn-icon-dl">📥</span>
+                <span class="btn-text-dl">Скачать</span>
               </span>
             </button>
           </div>
@@ -353,6 +409,56 @@
           <button class="emoji-opt">💔</button>
           <button class="emoji-opt">✨</button>
           <button class="emoji-opt">👀</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модалка: Мой персональный стикерпак -->
+    <div class="modal-cyber" id="myPackModal" style="display: none;">
+      <div class="modal-cyber-backdrop" id="backdropMyPack"></div>
+      <div class="modal-cyber-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="modal-fire-icon">🔥</span>
+            <span class="modal-title">Твой стикерпак</span>
+          </div>
+          <button type="button" class="btn-modal-close" id="btnCloseMyPack">✕</button>
+        </div>
+
+        <div class="modal-pack-body">
+          <div class="pack-stat-banner">
+            <div class="pack-stat-num" id="modalPackCount">0</div>
+            <div class="pack-stat-desc">
+              <span class="pack-stat-title">Стикеров в паке</span>
+              <span class="pack-stat-sub">512×512 WebM VP9 (Telegram Video)</span>
+            </div>
+          </div>
+
+          <div class="pack-link-box">
+            <label class="pack-link-label">Прямая ссылка на стикерпак:</label>
+            <div class="pack-link-input-row">
+              <input type="text" id="inputPackLink" class="input-cyber input-cyber-link" readonly value="https://t.me/addstickers/...">
+              <button type="button" class="btn-cyber-copy" id="btnCopyPackLink" title="Скопировать ссылку">
+                <span id="copyBtnText">Копия</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-actions-row">
+            <button type="button" class="btn-cyber-primary btn-modal-open-tg" id="btnModalOpenTg">
+              <span class="btn-content">
+                <svg class="tg-icon" viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                </svg>
+                <span>Открыть в TG</span>
+              </span>
+            </button>
+            <button type="button" class="btn-cyber-share" id="btnModalShare" title="Поделиться паком с друзьями">
+              <span class="btn-content">
+                <span>🚀 Поделиться</span>
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

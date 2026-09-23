@@ -102,9 +102,16 @@ async def handle_generate_vibe(request: web.Request) -> web.Response:
 
     category = body.get("category", "all")
     prompt = body.get("prompt", "")
+    slang_style = body.get("slang_style", "zoomer")
+    custom_context = body.get("custom_context", "")
 
     try:
-        result = await generate_vibe(category=category, prompt=prompt)
+        result = await generate_vibe(
+            category=category,
+            prompt=prompt,
+            slang_style=slang_style,
+            custom_context=custom_context
+        )
         return web.json_response({
             "status": "ok",
             "vibe": result
@@ -249,13 +256,20 @@ async def handle_commit_sticker(request: web.Request) -> web.Response:
     font_family = body.get("font_family", "impact")
     text_color = body.get("text_color", "#FFFFFF")
     stroke_color = body.get("stroke_color", "#000000")
+    try:
+        font_size_scale = max(0.5, min(2.0, float(body.get("font_size_scale", 1.0))))
+    except (ValueError, TypeError):
+        font_size_scale = 1.0
+    text_layout = str(body.get("text_layout", "both")).strip().lower()
+    if text_layout not in ("both", "center", "top_only", "bottom_only"):
+        text_layout = "both"
 
     bot: Bot = request.app.get("bot")
 
     # 2. Конвертация видео с защитой от перегрузки CPU (семафор)
     try:
         async with commit_semaphore:
-            logger.info(f"Начало сборки стикера для user_id={user['id']}: '{top_text} / {bottom_text}' (font={font_family}, color={text_color})")
+            logger.info(f"Начало сборки стикера для user_id={user['id']}: '{top_text} / {bottom_text}' (font={font_family}, color={text_color}, scale={font_size_scale}, layout={text_layout})")
             sticker_bytes = await process_sticker(
                 video_url=video_url,
                 caption=caption,
@@ -263,7 +277,9 @@ async def handle_commit_sticker(request: web.Request) -> web.Response:
                 bottom_text=bottom_text,
                 font_family=font_family,
                 text_color=text_color,
-                stroke_color=stroke_color
+                stroke_color=stroke_color,
+                font_size_scale=font_size_scale,
+                text_layout=text_layout
             )
     except Exception as e:
         logger.error(f"Ошибка обработки видео в FFmpeg: {e}")
@@ -402,6 +418,82 @@ async def handle_upload_media(request: web.Request) -> web.Response:
         return web.json_response({"error": str(e)}, status=500)
 
 
+async def handle_download_sticker(request: web.Request) -> web.Response:
+    """
+    POST /api/download-sticker
+    Генерирует готовый WebM видео-стикер (512x512 VP9, <= 256 КБ) и возвращает прямую ссылку на скачивание.
+    Тело запроса (JSON):
+    {
+        "video_url": "https://...",
+        "caption": "...",
+        "top_text": "...",
+        "bottom_text": "...",
+        "font_family": "impact",
+        "text_color": "#FFFFFF",
+        "stroke_color": "#000000",
+        "font_size_scale": 1.0,
+        "text_layout": "both"
+    }
+    """
+    try:
+        body = await request.json()
+    except Exception as e:
+        return web.json_response({"error": f"Невалидный JSON: {e}"}, status=400)
+
+    video_url = body.get("video_url")
+    if not video_url:
+        return web.json_response({"error": "Параметр 'video_url' обязателен."}, status=400)
+
+    caption = body.get("caption", "")
+    top_text = body.get("top_text", "")
+    bottom_text = body.get("bottom_text", "")
+    font_family = body.get("font_family", "impact")
+    text_color = body.get("text_color", "#FFFFFF")
+    stroke_color = body.get("stroke_color", "#000000")
+    try:
+        font_size_scale = max(0.5, min(2.0, float(body.get("font_size_scale", 1.0))))
+    except (ValueError, TypeError):
+        font_size_scale = 1.0
+    text_layout = str(body.get("text_layout", "both")).strip().lower()
+    if text_layout not in ("both", "center", "top_only", "bottom_only"):
+        text_layout = "both"
+
+    try:
+        async with commit_semaphore:
+            logger.info(f"Сборка стикера для прямого скачивания: '{top_text} / {bottom_text}'")
+            sticker_bytes = await process_sticker(
+                video_url=video_url,
+                caption=caption,
+                top_text=top_text,
+                bottom_text=bottom_text,
+                font_family=font_family,
+                text_color=text_color,
+                stroke_color=stroke_color,
+                font_size_scale=font_size_scale,
+                text_layout=text_layout
+            )
+
+        file_uuid = uuid.uuid4().hex[:10]
+        safe_filename = f"sticker_{file_uuid}.webm"
+        upload_dir = config.BASE_DIR / "webapp" / "media" / "uploads"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        file_path = upload_dir / safe_filename
+        with open(file_path, "wb") as f:
+            f.write(sticker_bytes)
+
+        download_url = f"/media/uploads/{safe_filename}"
+        logger.info(f"Стикер для скачивания скомпилирован ({len(sticker_bytes)} байт) -> {download_url}")
+        return web.json_response({
+            "status": "ok",
+            "download_url": download_url,
+            "filename": safe_filename,
+            "size_bytes": len(sticker_bytes)
+        })
+    except Exception as e:
+        logger.error(f"Ошибка при прямой сборке стикера для скачивания: {e}")
+        return web.json_response({"error": f"Ошибка сборки стикера: {e}"}, status=500)
+
+
 def setup_routes(app: web.Application):
     """Регистрирует все маршруты API."""
     app.router.add_get("/api/pack-info", handle_pack_info)
@@ -410,4 +502,5 @@ def setup_routes(app: web.Application):
     app.router.add_post("/api/ai-search-gifs", handle_ai_search_gifs)
     app.router.add_get("/api/ai-search-gifs", handle_ai_search_gifs)
     app.router.add_post("/api/commit-sticker", handle_commit_sticker)
+    app.router.add_post("/api/download-sticker", handle_download_sticker)
     app.router.add_post("/api/upload-media", handle_upload_media)

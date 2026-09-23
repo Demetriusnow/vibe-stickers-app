@@ -1643,3 +1643,442 @@ body::before {
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   }
 }
+
+/* ==========================================================================
+   Vibe Stickers 3.0: Сленг ИИ, Типографика, Скачивание, Шеринг и Модалка Пака
+   ========================================================================== */
+
+/* Кнопка шеринга в хедере */
+.btn-share-header {
+  width: 32px;
+  height: 32px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid var(--neon-purple);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--neon-purple-glow);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btn-share-header:active {
+  transform: scale(0.9);
+}
+
+.btn-share-icon {
+  font-size: 14px;
+}
+
+/* Секция Сленг ИИ */
+.slang-engine-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(12, 18, 32, 0.65);
+  border: 1px solid var(--border-glass-dim);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.slang-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.slang-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.slang-chips-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.slang-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.slang-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #B4C4D8;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.slang-chip:hover {
+  border-color: var(--neon-cyan);
+  color: #FFFFFF;
+}
+
+.slang-chip.active {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(168, 85, 247, 0.2));
+  border-color: var(--neon-cyan);
+  color: #FFFFFF;
+  box-shadow: 0 0 12px var(--neon-cyan-glow);
+}
+
+.custom-context-wrap {
+  margin-top: 2px;
+}
+
+.input-context-row {
+  display: flex;
+  align-items: center;
+  background: rgba(8, 12, 22, 0.85);
+  border: 1px solid rgba(0, 242, 254, 0.2);
+  border-radius: 10px;
+  padding: 0 8px;
+}
+
+.input-context-row:focus-within {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+
+.context-prefix-icon {
+  font-size: 13px;
+  margin-right: 6px;
+  opacity: 0.8;
+}
+
+.input-cyber-sm {
+  font-size: 11.5px;
+  padding: 7px 4px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  flex: 1;
+}
+
+/* Типографика: Размер и Позиция */
+.typography-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.typography-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.size-control-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 2px 4px;
+}
+
+.btn-size-step {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  width: 26px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-size-step:active {
+  transform: scale(0.9);
+  background: var(--neon-cyan);
+  color: #050B14;
+}
+
+.font-size-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  min-width: 38px;
+  text-align: center;
+}
+
+.layout-chips-row {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.layout-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #B4C4D8;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.layout-chip.active {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: var(--neon-purple);
+  color: #FFFFFF;
+  box-shadow: 0 0 10px var(--neon-purple-glow);
+}
+
+/* Кнопки в CTA панели */
+.studio-cta-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.studio-cta-wrap .btn-commit-pack {
+  flex: 1.6;
+}
+
+.btn-cyber-download {
+  flex: 1;
+  position: relative;
+  border: 1px solid var(--neon-cyan);
+  background: rgba(0, 242, 254, 0.12);
+  color: #FFFFFF;
+  padding: 14px 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.15);
+  transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.btn-cyber-download:active {
+  transform: scale(0.97);
+  background: rgba(0, 242, 254, 0.25);
+}
+
+.btn-cyber-download.loading {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.btn-icon-dl {
+  font-size: 16px;
+}
+
+.btn-text-dl {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--neon-cyan);
+}
+
+/* Модалка: Мой Стикерпак */
+.modal-cyber {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-cyber-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 8, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.modal-cyber-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  background: #0B1120;
+  border: 1.5px solid var(--border-glass-mid);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.8),
+    0 0 35px rgba(0, 242, 254, 0.2);
+  animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-fire-icon {
+  font-size: 20px;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.btn-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #8C9EB5;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-modal-close:hover {
+  background: rgba(255, 0, 127, 0.25);
+  color: #FFFFFF;
+}
+
+.pack-stat-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 0, 127, 0.08);
+  border: 1px solid rgba(255, 0, 127, 0.25);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.pack-stat-num {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--neon-pink);
+  line-height: 1;
+}
+
+.pack-stat-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pack-stat-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.pack-stat-sub {
+  font-size: 11px;
+  color: var(--tg-theme-hint-color);
+}
+
+.pack-link-box {
+  margin-bottom: 18px;
+}
+
+.pack-link-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #A0B0C5;
+  margin-bottom: 6px;
+}
+
+.pack-link-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.input-cyber-link {
+  font-size: 12px;
+  padding: 8px 10px;
+  background: rgba(6, 10, 18, 0.8);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  text-overflow: ellipsis;
+}
+
+.btn-cyber-copy {
+  background: rgba(0, 242, 254, 0.15);
+  border: 1px solid var(--neon-cyan);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 0 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-cyber-copy:active {
+  transform: scale(0.94);
+}
+
+.modal-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-modal-open-tg {
+  flex: 1.3;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.btn-cyber-share {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(255, 0, 127, 0.3));
+  border: 1px solid var(--neon-purple);
+  color: #FFFFFF;
+  border-radius: 16px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 16px var(--neon-purple-glow);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-cyber-share:active {
+  transform: scale(0.96);
+}
